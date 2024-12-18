@@ -1,34 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Container, createTheme, Stack, ThemeProvider, Typography } from '@mui/material'
+import Users from './Users'
+import useBill from './hooks/use-bill'
+import Items from './Items'
+import Taxes from './Taxes'
+import PriceSummary from './PriceSummary'
+import WhoPaid from './WhoPaid.tsx'
+import Report from './Report.tsx'
+
+const theme = createTheme({
+  typography: {
+    fontSize: 12,
+    fontFamily: 'Roboto',
+    h1: {
+      fontSize: '2rem',
+      fontWeight: 'bold',
+    },
+    h2: {
+      fontSize: '1.5rem',
+      fontWeight: 'bold',
+    },
+    h3: {
+      fontSize: '1.3rem',
+      fontWeight: 'bold',
+    },
+    h4: {
+      fontSize: '1.1rem',
+      fontWeight: 'bold',
+    },
+    h5: {
+      fontSize: '1rem',
+      fontWeight: 'bold',
+    },
+  },
+})
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { data, methods } = useBill()
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <ThemeProvider theme={theme}>
+      <Container maxWidth='sm'>
+        <Stack spacing={1}>
+          <Typography variant='h1'>Bill Splitter</Typography>
+          <Users data={data} methods={methods} />
+          <Items data={data} methods={methods} />
+          <Taxes data={data} methods={methods} />
+          <PriceSummary data={data} methods={methods} />
+          <WhoPaid data={data} methods={methods} />
+          <Report data={data} methods={methods} />
+          {/* <pre>{JSON.stringify(data, null, 2)}</pre> */}
+        </Stack>
+      </Container>
+    </ThemeProvider>
   )
 }
 
