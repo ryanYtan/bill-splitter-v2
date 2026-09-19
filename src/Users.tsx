@@ -34,7 +34,7 @@ const Users = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
                 />
               </>
             ) : (
-              data.users.map(user => <PersonChip user={user} onDelete={() => methods.removeUser(user.id)} />)
+              data.users.map(user => <PersonChip key={user.id} user={user} onDelete={() => methods.removeUser(user.id)} />)
             )}
           </FlexBox>
           <UserInput data={data} methods={methods} />
@@ -48,25 +48,11 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
 
-  const generateRandomName = (): string => {
-    const generatedNames = new Set<string>()
-    while (true) {
-      const r = randomNames[Math.floor(Math.random() * randomNames.length)]
-      if (!props.data.users.find(user => user.name === r)) {
-        return r
-      }
-      generatedNames.add(r)
-      if (generatedNames.size === randomNames.length) {
-        break
-      }
-    }
-    return ''
-  }
-
   const addRandomUser = () => {
-    const randomName = generateRandomName()
-    if (randomName !== '') {
-      props.methods.addUser(randomName)
+    const takenNames = new Set(props.data.users.map(user => user.name))
+    const availableNames = randomNames.filter(name => !takenNames.has(name))
+    if (availableNames.length > 0) {
+      props.methods.addUser(availableNames[Math.floor(Math.random() * availableNames.length)])
     }
   }
 

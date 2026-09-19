@@ -1,9 +1,9 @@
-import { BillData, BillMethods } from './hooks/use-bill.ts'
-import SectionContainer from './components/Section/SectionContainer.tsx'
-import Section from './components/Section/Section.tsx'
+import { BillData, BillMethods } from './hooks/use-bill'
+import SectionContainer from './components/Section/SectionContainer'
+import Section from './components/Section/Section'
 import { Stack, Typography } from '@mui/material'
-import PersonChip from './components/PersonChip.tsx'
-import FlexBox from './components/FlexBox.tsx'
+import PersonChip from './components/PersonChip'
+import FlexBox from './components/FlexBox'
 
 interface WhoPaidProps {
   data: BillData
@@ -32,7 +32,7 @@ const WhoPaid = (props: WhoPaidProps) => {
           <Typography sx={{ fontWeight: 'bold' }}>Select the person who paid for the bill</Typography>
           <FlexBox sx={{ gap: 0.5, justifyContent: 'center' }}>
             {data.users.map(user => (
-              <PersonChip variant='filled' user={user} onClick={() => setWhoPaid(user.id)} color={user.id === data.payer ? 'primary' : 'default'} />
+              <PersonChip key={user.id} variant='filled' user={user} onClick={() => setWhoPaid(user.id)} color={user.id === data.payer ? 'primary' : 'default'} />
             ))}
           </FlexBox>
         </Stack>

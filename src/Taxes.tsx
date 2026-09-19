@@ -6,76 +6,60 @@ import SectionContainer from './components/Section/SectionContainer'
 import Section from './components/Section/Section'
 import BigNumber from 'bignumber.js'
 
+interface TaxRowProps {
+  label: string
+  percentage: BigNumber
+  enabled: boolean
+  onPercentageChange: (percentage: BigNumber) => void
+  onEnabledChange: (enabled: boolean) => void
+}
+
+const TaxRow = (props: TaxRowProps) => {
+  return (
+    <Section sx={{ py: 1, px: 2 }}>
+      <FlexBox sx={{ justifyContent: 'space-between' }}>
+        <FlexBox>
+          <Typography sx={{ fontWeight: 'bold' }}>APPLY</Typography>
+          <NumericFormat
+            isAllowed={values => {
+              const { formattedValue, floatValue } = values
+              return formattedValue === '' || (!!floatValue && 0 <= floatValue && floatValue <= 100)
+            }}
+            decimalScale={2}
+            allowLeadingZeros={false}
+            value={props.percentage.toNumber()}
+            onChange={e => props.onPercentageChange(new BigNumber(e.target.value))}
+            customInput={TextField}
+            variant='standard'
+            slotProps={{
+              input: {
+                endAdornment: <InputAdornment position='end'>%</InputAdornment>,
+              },
+            }}
+            sx={{
+              width: 50,
+            }}
+          />
+          <Typography sx={{ fontWeight: 'bold' }}>{props.label}</Typography>
+        </FlexBox>
+        <FlexBox sx={{ justifyContent: 'flex-end' }}>
+          <Checkbox checked={props.enabled} onChange={e => props.onEnabledChange(e.target.checked)} />
+        </FlexBox>
+      </FlexBox>
+    </Section>
+  )
+}
+
 interface TaxesProps {
   data: BillData
   methods: BillMethods
 }
 
-const Taxes = (props: TaxesProps) => {
+const Taxes = ({ data, methods }: TaxesProps) => {
   return (
     <SectionContainer>
-      <Section sx={{ py: 1, px: 2 }}>
-        <FlexBox sx={{ justifyContent: 'space-between' }}>
-          <FlexBox>
-            <Typography sx={{ fontWeight: 'bold' }}>APPLY</Typography>
-            <NumericFormat
-              isAllowed={values => {
-                const { formattedValue, floatValue } = values
-                return formattedValue === '' || (!!floatValue && 0 <= floatValue && floatValue <= 100)
-              }}
-              decimalScale={2}
-              allowLeadingZeros={false}
-              value={props.data.serviceTax.percentage.toNumber()}
-              onChange={e => props.methods.setServiceTax(new BigNumber(e.target.value))}
-              customInput={TextField}
-              variant='standard'
-              slotProps={{
-                input: {
-                  endAdornment: <InputAdornment position='end'>%</InputAdornment>,
-                },
-              }}
-              sx={{
-                width: 50,
-              }}
-            />
-            <Typography sx={{ fontWeight: 'bold' }}>SERVICE CHARGE</Typography>
-          </FlexBox>
-          <FlexBox sx={{ justifyContent: 'flex-end' }}>
-            <Checkbox checked={props.data.serviceTax.enable} onChange={e => props.methods.setServiceTaxEnabled(e.target.checked)} />
-          </FlexBox>
-        </FlexBox>
-      </Section>
-      <Section sx={{ py: 1, px: 2 }}>
-        <FlexBox sx={{ justifyContent: 'space-between' }}>
-          <FlexBox>
-            <Typography sx={{ fontWeight: 'bold' }}>APPLY</Typography>
-            <NumericFormat
-              isAllowed={values => {
-                const { formattedValue, floatValue } = values
-                return formattedValue === '' || (!!floatValue && 0 <= floatValue && floatValue <= 100)
-              }}
-              decimalScale={2}
-              allowLeadingZeros={false}
-              value={props.data.gstTax.percentage.toNumber()}
-              onChange={e => props.methods.setGstTax(new BigNumber(e.target.value))}
-              customInput={TextField}
-              variant='standard'
-              slotProps={{
-                input: {
-                  endAdornment: <InputAdornment position='end'>%</InputAdornment>,
-                },
-              }}
-              sx={{
-                width: 50,
-              }}
-            />
-            <Typography sx={{ fontWeight: 'bold' }}>GST</Typography>
-          </FlexBox>
-          <FlexBox sx={{ justifyContent: 'flex-end' }}>
-            <Checkbox checked={props.data.gstTax.enable} onChange={e => props.methods.setGstTaxEnabled(e.target.checked)} />
-          </FlexBox>
-        </FlexBox>
-      </Section>
+      <TaxRow label='SERVICE CHARGE' percentage={data.serviceTax.percentage} enabled={data.serviceTax.enable} onPercentageChange={methods.setServiceTax} onEnabledChange={methods.setServiceTaxEnabled} />
+      <TaxRow label='GST' percentage={data.gstTax.percentage} enabled={data.gstTax.enable} onPercentageChange={methods.setGstTax} onEnabledChange={methods.setGstTaxEnabled} />
     </SectionContainer>
   )
 }

@@ -1,8 +1,8 @@
-import { BillData, BillMethods } from './hooks/use-bill.ts'
-import SectionContainer from './components/Section/SectionContainer.tsx'
-import Section from './components/Section/Section.tsx'
+import { BillData, BillMethods } from './hooks/use-bill'
+import SectionContainer from './components/Section/SectionContainer'
+import Section from './components/Section/Section'
 import { Box, Stack, Typography } from '@mui/material'
-import FlexBox from './components/FlexBox.tsx'
+import FlexBox from './components/FlexBox'
 
 interface ReportProps {
   data: BillData
@@ -20,14 +20,19 @@ const Report = (props: ReportProps) => {
     return null
   }
 
+  const totals = [
+    ['SUBTOTAL:', methods.computeSubtotal()],
+    ['SERVICE CHARGE:', methods.computeServiceTax()],
+    ['GST:', methods.computeGstTax()],
+    ['TOTAL:', methods.computeTotal()],
+  ] as const
+
   return (
     <SectionContainer>
       <Section sx={{ p: 2 }}>
         <Stack spacing={2}>
           <Box>
-            <Typography sx={{ fontSize: 14, fontWeight: 'bold' }}>
-              BILL SUMMARY
-            </Typography>
+            <Typography sx={{ fontSize: 14, fontWeight: 'bold' }}>BILL SUMMARY</Typography>
             <Typography variant='subtitle2' sx={{ fontWeight: 400 }}>
               <em>Actual shares may be off by 1-2 cents due to rounding errors</em>
             </Typography>
@@ -46,41 +51,25 @@ const Report = (props: ReportProps) => {
           <Box>
             {data.users.map(user =>
               data.payer === user.id ? (
-                <Typography>
+                <Typography key={user.id}>
                   <strong>{user.name}</strong> paid for everyone. (<strong>{user.name}</strong>'s share is ${methods.computeUserShare(user.id).toFixed(2)})
                 </Typography>
               ) : (
-                <Typography>
+                <Typography key={user.id}>
                   <strong>{user.name}</strong> owes <strong>{paidByName}</strong> ${methods.computeUserShare(user.id).toFixed(2)}
                 </Typography>
               )
             )}
           </Box>
           <Box>
-            <FlexBox>
-              <Box sx={{ width: 120 }}>
-                <Typography sx={{ fontWeight: 'bold' }}>SUBTOTAL:</Typography>
-              </Box>
-              <Typography>${methods.computeSubtotal().toFixed(2)}</Typography>
-            </FlexBox>
-            <FlexBox>
-              <Box sx={{ width: 120 }}>
-                <Typography sx={{ fontWeight: 'bold' }}>SERVICE CHARGE:</Typography>
-              </Box>
-              <Typography>${methods.computeServiceTax().toFixed(2)}</Typography>
-            </FlexBox>
-            <FlexBox>
-              <Box sx={{ width: 120 }}>
-                <Typography sx={{ fontWeight: 'bold' }}>GST:</Typography>
-              </Box>
-              <Typography>${methods.computeGstTax().toFixed(2)}</Typography>
-            </FlexBox>
-            <FlexBox>
-              <Box sx={{ width: 120 }}>
-                <Typography sx={{ fontWeight: 'bold' }}>TOTAL:</Typography>
-              </Box>
-              <Typography>${methods.computeTotal().toFixed(2)}</Typography>
-            </FlexBox>
+            {totals.map(([label, amount]) => (
+              <FlexBox key={label}>
+                <Box sx={{ width: 120 }}>
+                  <Typography sx={{ fontWeight: 'bold' }}>{label}</Typography>
+                </Box>
+                <Typography>${amount.toFixed(2)}</Typography>
+              </FlexBox>
+            ))}
           </Box>
         </Stack>
       </Section>

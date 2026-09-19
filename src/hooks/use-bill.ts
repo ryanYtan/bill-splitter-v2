@@ -14,12 +14,12 @@ export type Item = {
   quantity: BigNumber
 }
 
-export type ServiceTax = {
-  enable: boolean
-  percentage: BigNumber
+export type UserItem = {
+  userId: string
+  itemId: string
 }
 
-export type GstTax = {
+export type TaxSetting = {
   enable: boolean
   percentage: BigNumber
 }
@@ -28,9 +28,9 @@ export type BillData = {
   users: User[]
   items: Item[]
   payer: string | undefined
-  serviceTax: ServiceTax
-  gstTax: GstTax
-  userItems: { userId: string; itemId: string }[]
+  serviceTax: TaxSetting
+  gstTax: TaxSetting
+  userItems: UserItem[]
 }
 
 export type BillMethods = {
@@ -60,9 +60,9 @@ const useBill = (): {
   const [users, setUsers] = useState<User[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [payer, setPayer] = useState<string>()
-  const [serviceTax, setServiceTax] = useState<ServiceTax>({ enable: true, percentage: new BigNumber(10) })
-  const [gstTax, setGstTax] = useState<GstTax>({ enable: true, percentage: new BigNumber(9) })
-  const [userItems, setUserItems] = useState<{ userId: string; itemId: string }[]>([])
+  const [serviceTax, setServiceTax] = useState<TaxSetting>({ enable: true, percentage: new BigNumber(10) })
+  const [gstTax, setGstTax] = useState<TaxSetting>({ enable: true, percentage: new BigNumber(9) })
+  const [userItems, setUserItems] = useState<UserItem[]>([])
 
   const computeSubtotal = () => {
     let subtotal = new BigNumber(0)
@@ -135,7 +135,7 @@ const useBill = (): {
       removeUser: (id: string) => {
         setUsers(prev => prev.filter(u => u.id !== id))
         setUserItems(prev => prev.filter(ui => ui.userId !== id))
-        if (!!payer && payer === id) {
+        if (payer === id) {
           setPayer(undefined)
         }
       },

@@ -22,13 +22,11 @@ const Items = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
       <SectionContainer>
         {data.items.length === 0 && (
           <Section sx={{ p: 2 }}>
-            <Typography sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-              Click ADD ITEM below to add items to this bill
-            </Typography>
+            <Typography sx={{ fontWeight: 'bold', textAlign: 'center' }}>Click ADD ITEM below to add items to this bill</Typography>
           </Section>
         )}
         {data.items.map(item => (
-          <Section sx={{ p: 2 }}>
+          <Section key={item.id} sx={{ p: 2 }}>
             <FlexBox>
               <FlexBox sx={{ width: 50 }}>
                 <IconButton onClick={() => methods.removeItem(item.id)}>
@@ -48,7 +46,7 @@ const Items = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
                 {data.users
                   .filter(u => methods.itemHasContributor(u.id, item.id))
                   .map(user => (
-                    <PersonChip variant='filled' color='primary' user={user} onDelete={() => methods.removeUserItem(user.id, item.id)} />
+                    <PersonChip key={user.id} variant='filled' color='primary' user={user} onDelete={() => methods.removeUserItem(user.id, item.id)} />
                   ))}
                 <UserItemSelector data={data} methods={methods} item={item} />
               </FlexBox>

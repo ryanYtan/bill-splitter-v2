@@ -50,7 +50,7 @@ const UserItemSelector = (props: UserItemSelectorProps) => {
               )}
               <FlexBox sx={{ gap: 0.5 }}>
                 {props.data.users.map(user => (
-                  <PersonChip variant='filled' color={props.methods.itemHasContributor(user.id, props.item.id) ? 'primary' : 'default'} user={user} onClick={() => togglePersonToItem(user)} />
+                  <PersonChip key={user.id} variant='filled' color={props.methods.itemHasContributor(user.id, props.item.id) ? 'primary' : 'default'} user={user} onClick={() => togglePersonToItem(user)} />
                 ))}
               </FlexBox>
             </Stack>

@@ -42,7 +42,7 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <Routes>
-          <Route path={`${PROG}`} element={<App />} />
+          <Route path={PROG} element={<App />} />
           <Route path={`${PROG}/s/:slug`} element={<App />} />
         </Routes>
       </BrowserRouter>

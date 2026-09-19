@@ -4,12 +4,10 @@ import useBill from './hooks/use-bill'
 import Items from './Items'
 import Taxes from './Taxes'
 import PriceSummary from './PriceSummary'
-import WhoPaid from './WhoPaid.tsx'
-import Report from './Report.tsx'
-import { useParams } from 'react-router'
+import WhoPaid from './WhoPaid'
+import Report from './Report'
 
 function App() {
-  const { slug } = useParams()
   const { data, methods } = useBill()
 
   return (
@@ -22,7 +20,6 @@ function App() {
         <PriceSummary data={data} methods={methods} />
         <WhoPaid data={data} methods={methods} />
         <Report data={data} methods={methods} />
-        {/* <pre>{JSON.stringify(data, null, 2)}</pre> */}
       </Stack>
     </Container>
   )
