@@ -9,6 +9,7 @@ import UserItemSelector from './UserItemSelector'
 import PersonChip from './components/PersonChip'
 import SectionContainer from './components/Section/SectionContainer'
 import FlexBox from './components/FlexBox'
+import ReceiptScanner from './components/ReceiptScanner'
 
 const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMethods; readOnly?: boolean }) => {
   const [open, setOpen] = useState(false)
@@ -57,9 +58,12 @@ const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
         ))}
         {!readOnly && (
           <Section>
-            <Button fullWidth onClick={() => setOpen(true)} sx={{ borderRadius: theme => `0px 0px ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px` }}>
-              Add Item
-            </Button>
+            <FlexBox>
+              <Button fullWidth onClick={() => setOpen(true)} sx={{ borderRadius: theme => `0px 0px 0px ${theme.shape.borderRadius}px` }}>
+                Add Item
+              </Button>
+              <ReceiptScanner data={data} methods={methods} />
+            </FlexBox>
           </Section>
         )}
       </SectionContainer>

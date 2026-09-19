@@ -36,7 +36,7 @@ export type BillData = {
 export type BillMethods = {
   addUser: (name: string) => void
   removeUser: (id: string) => void
-  addItem: (item: Omit<Item, 'id'>) => void
+  addItem: (item: Omit<Item, 'id'>) => string
   removeItem: (id: string) => void
   setPayer: (id: string | undefined) => void
   addUserItem: (userId: string, itemId: string) => void
@@ -148,6 +148,7 @@ const useBill = (
       addItem: (item: Omit<Item, 'id'>) => {
         const id = uuidv4()
         setItems(prev => [...prev, { id, ...item }])
+        return id
       },
       removeItem: (id: string) => {
         setItems(prev => prev.filter(i => i.id !== id))

@@ -35,8 +35,8 @@ const migrations: Record<number, (bill: RawBill) => RawBill> = {}
 const NEWER_VERSION_MESSAGE = 'This bill was created with a newer version of Bill Splitter. Try refreshing the page.'
 
 const MAX_USERS = 200
-const MAX_ITEMS = 500
-const MAX_TEXT_LENGTH = 200
+export const MAX_ITEMS = 500
+export const MAX_TEXT_LENGTH = 200
 const MAX_PRICE = 1e9
 const MAX_QUANTITY = 1e6
 

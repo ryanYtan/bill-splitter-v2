@@ -37,6 +37,10 @@ A bill is shared as `<page URL>?share=<token>`; opening such a link renders the 
 - Everything decoded from a link is untrusted: validate in `format.ts` and throw `ShareError` (its message is shown to the user).
 - `useBill(initial?)` accepts the decoded bill as initial state; `App` decodes before mounting `Bill`, since hook state can only be seeded on first render.
 
+### Receipt scanning: `src/components/ReceiptScanner.tsx`, `src/ocr/parse-receipt.ts`
+
+"Scan Receipt" (next to "Add Item" in `Items.tsx`) runs on-device OCR with `tesseract.js`, which is **lazy-loaded** via dynamic `import()` so it stays out of the main bundle. Its worker, WASM and `eng` language data are fetched from the jsDelivr CDN on first scan (needs network). `parseReceiptText` is a pure text -> items heuristic (skips total/GST/change lines, treats prices as line totals, only splits into per-unit when it divides exactly to cents, merges duplicates). Items are added immediately, with an Undo snackbar (`addItem` returns the new id). Names and item count are clamped to the share-format limits (`MAX_TEXT_LENGTH`, `MAX_ITEMS`, exported from `share/format.ts`) so the sender's own share link stays valid.
+
 ### UI
 
 Section components in `src/*.tsx` are each wrapped in `components/Section/SectionContainer` + `Section` for consistent layout. Shared bits are in `src/components/` (`ItemForm`, `PersonChip`, `FlexBox`). MUI theme (Roboto, compact typography scale) is defined in `src/main.tsx`. `src/constants/constants.ts` holds the `randomNames` list used by `Users.tsx` to generate random unused names.
