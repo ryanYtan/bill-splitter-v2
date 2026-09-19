@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-Package manager is **yarn** (v1). There is no test runner configured.
+Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 enforces it via `engines`; CI uses Node 24). There is no test runner configured.
 
 - `yarn dev` — Vite dev server. The app is served under the base path `/bill-splitter-v2/`, so open `http://localhost:5173/bill-splitter-v2/`.
 - `yarn build` — `tsc -b && vite build` (type-check is part of the build; `strict`, `noUnusedLocals`, `noUnusedParameters` are on).
@@ -30,4 +30,4 @@ Key modelling details:
 
 ### UI
 
-Section components in `src/*.tsx` are each wrapped in `components/Section/SectionContainer` + `Section` for consistent layout. Shared bits are in `src/components/` (`ItemForm`, `PersonChip`, `FlexBox`, `ClickAwayTooltipIcon`). MUI theme (Roboto, compact typography scale) is defined in `src/main.tsx`. `src/constants/constants.ts` holds the `randomNames` list used by `Users.tsx` to generate random unused names.
+Section components in `src/*.tsx` are each wrapped in `components/Section/SectionContainer` + `Section` for consistent layout. Shared bits are in `src/components/` (`ItemForm`, `PersonChip`, `FlexBox`). MUI theme (Roboto, compact typography scale) is defined in `src/main.tsx`. `src/constants/constants.ts` holds the `randomNames` list used by `Users.tsx` to generate random unused names.
