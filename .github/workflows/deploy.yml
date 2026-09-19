@@ -39,9 +39,6 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build
         run: yarn build
-      - name: Add SPA fallback
-        # GitHub Pages serves 404.html for unknown paths (e.g. /s/:slug), letting the router handle them client-side
-        run: cp dist/index.html dist/404.html
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

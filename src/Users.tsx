@@ -8,7 +8,11 @@ import FlexBox from './components/FlexBox'
 import SectionContainer from './components/Section/SectionContainer'
 import Section from './components/Section/Section'
 
-const Users = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
+const Users = ({ data, methods, readOnly }: { data: BillData; methods: BillMethods; readOnly?: boolean }) => {
+  if (readOnly && data.users.length === 0) {
+    return null
+  }
+
   return (
     <SectionContainer>
       <Section sx={{ p: 2 }}>
@@ -34,10 +38,10 @@ const Users = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
                 />
               </>
             ) : (
-              data.users.map(user => <PersonChip key={user.id} user={user} onDelete={() => methods.removeUser(user.id)} />)
+              data.users.map(user => <PersonChip key={user.id} user={user} onDelete={readOnly ? undefined : () => methods.removeUser(user.id)} />)
             )}
           </FlexBox>
-          <UserInput data={data} methods={methods} />
+          {!readOnly && <UserInput data={data} methods={methods} />}
         </Stack>
       </Section>
     </SectionContainer>

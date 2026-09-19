@@ -10,6 +10,7 @@ interface TaxRowProps {
   label: string
   percentage: BigNumber
   enabled: boolean
+  readOnly?: boolean
   onPercentageChange: (percentage: BigNumber) => void
   onEnabledChange: (enabled: boolean) => void
 }
@@ -34,6 +35,7 @@ const TaxRow = (props: TaxRowProps) => {
             slotProps={{
               input: {
                 endAdornment: <InputAdornment position='end'>%</InputAdornment>,
+                readOnly: props.readOnly,
               },
             }}
             sx={{
@@ -43,7 +45,7 @@ const TaxRow = (props: TaxRowProps) => {
           <Typography sx={{ fontWeight: 'bold' }}>{props.label}</Typography>
         </FlexBox>
         <FlexBox sx={{ justifyContent: 'flex-end' }}>
-          <Checkbox checked={props.enabled} onChange={e => props.onEnabledChange(e.target.checked)} />
+          <Checkbox checked={props.enabled} disabled={props.readOnly} onChange={e => props.onEnabledChange(e.target.checked)} />
         </FlexBox>
       </FlexBox>
     </Section>
@@ -53,13 +55,14 @@ const TaxRow = (props: TaxRowProps) => {
 interface TaxesProps {
   data: BillData
   methods: BillMethods
+  readOnly?: boolean
 }
 
-const Taxes = ({ data, methods }: TaxesProps) => {
+const Taxes = ({ data, methods, readOnly }: TaxesProps) => {
   return (
     <SectionContainer>
-      <TaxRow label='SERVICE CHARGE' percentage={data.serviceTax.percentage} enabled={data.serviceTax.enable} onPercentageChange={methods.setServiceTax} onEnabledChange={methods.setServiceTaxEnabled} />
-      <TaxRow label='GST' percentage={data.gstTax.percentage} enabled={data.gstTax.enable} onPercentageChange={methods.setGstTax} onEnabledChange={methods.setGstTaxEnabled} />
+      <TaxRow label='SERVICE CHARGE' percentage={data.serviceTax.percentage} enabled={data.serviceTax.enable} readOnly={readOnly} onPercentageChange={methods.setServiceTax} onEnabledChange={methods.setServiceTaxEnabled} />
+      <TaxRow label='GST' percentage={data.gstTax.percentage} enabled={data.gstTax.enable} readOnly={readOnly} onPercentageChange={methods.setGstTax} onEnabledChange={methods.setGstTaxEnabled} />
     </SectionContainer>
   )
 }

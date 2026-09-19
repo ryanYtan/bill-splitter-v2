@@ -10,7 +10,7 @@ import PersonChip from './components/PersonChip'
 import SectionContainer from './components/Section/SectionContainer'
 import FlexBox from './components/FlexBox'
 
-const Items = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
+const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMethods; readOnly?: boolean }) => {
   const [open, setOpen] = useState(false)
 
   const onClose = () => {
@@ -22,17 +22,19 @@ const Items = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
       <SectionContainer>
         {data.items.length === 0 && (
           <Section sx={{ p: 2 }}>
-            <Typography sx={{ fontWeight: 'bold', textAlign: 'center' }}>Click ADD ITEM below to add items to this bill</Typography>
+            <Typography sx={{ fontWeight: 'bold', textAlign: 'center' }}>{readOnly ? 'This bill has no items' : 'Click ADD ITEM below to add items to this bill'}</Typography>
           </Section>
         )}
         {data.items.map(item => (
           <Section key={item.id} sx={{ p: 2 }}>
             <FlexBox>
-              <FlexBox sx={{ width: 50 }}>
-                <IconButton onClick={() => methods.removeItem(item.id)}>
-                  <DeleteIcon />
-                </IconButton>
-              </FlexBox>
+              {!readOnly && (
+                <FlexBox sx={{ width: 50 }}>
+                  <IconButton onClick={() => methods.removeItem(item.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </FlexBox>
+              )}
               <Box sx={{ width: 200 }}>
                 <Typography noWrap sx={{ fontWeight: 'bold' }}>
                   {item.name}
@@ -46,26 +48,30 @@ const Items = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
                 {data.users
                   .filter(u => methods.itemHasContributor(u.id, item.id))
                   .map(user => (
-                    <PersonChip key={user.id} variant='filled' color='primary' user={user} onDelete={() => methods.removeUserItem(user.id, item.id)} />
+                    <PersonChip key={user.id} variant='filled' color='primary' user={user} onDelete={readOnly ? undefined : () => methods.removeUserItem(user.id, item.id)} />
                   ))}
-                <UserItemSelector data={data} methods={methods} item={item} />
+                {!readOnly && <UserItemSelector data={data} methods={methods} item={item} />}
               </FlexBox>
             </FlexBox>
           </Section>
         ))}
-        <Section>
-          <Button fullWidth onClick={() => setOpen(true)} sx={{ borderRadius: theme => `0px 0px ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px` }}>
-            Add Item
-          </Button>
-        </Section>
-      </SectionContainer>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth='xs'>
-        <SectionContainer>
-          <Section sx={{ p: 2 }}>
-            <ItemForm data={data} methods={methods} onSubmit={onClose} />
+        {!readOnly && (
+          <Section>
+            <Button fullWidth onClick={() => setOpen(true)} sx={{ borderRadius: theme => `0px 0px ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px` }}>
+              Add Item
+            </Button>
           </Section>
-        </SectionContainer>
-      </Dialog>
+        )}
+      </SectionContainer>
+      {!readOnly && (
+        <Dialog open={open} onClose={onClose} fullWidth maxWidth='xs'>
+          <SectionContainer>
+            <Section sx={{ p: 2 }}>
+              <ItemForm data={data} methods={methods} onSubmit={onClose} />
+            </Section>
+          </SectionContainer>
+        </Dialog>
+      )}
     </>
   )
 }

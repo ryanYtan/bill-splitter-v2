@@ -13,9 +13,9 @@ Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 en
 
 ## Architecture
 
-Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `master` (the workflow copies `dist/index.html` to `dist/404.html` so deep links like `/s/:slug` work on Pages). There is no backend or persistence; all state is in memory.
+Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `master`. There is no backend or persistence; all state is in memory.
 
-**The repo name is hardcoded in two places that must stay in sync:** `base` in `vite.config.ts` and the `PROG` constant in `src/main.tsx` (used as the route prefix: `/bill-splitter-v2` and `/bill-splitter-v2/s/:slug`). The `/s/:slug` route renders `App` but nothing reads `slug` yet (reserved for shared bills).
+**The repo name is hardcoded in two places that must stay in sync:** `base` in `vite.config.ts` and the `PROG` constant in `src/main.tsx` (used as the route path `/bill-splitter-v2`). Sharing uses a query string (`?share=`), not extra routes, so GitHub Pages needs no SPA fallback.
 
 ### State: `src/hooks/use-bill.ts`
 
@@ -27,6 +27,15 @@ Key modelling details:
 - Calculation order: subtotal → service charge (on subtotal) → GST (on subtotal + service charge). Each taxed amount is rounded **up** to 2 dp (`ROUND_UP`). Defaults: service 10%, GST 9%, both enabled.
 - `computeUserShare` splits each item equally among its contributors, then allocates service charge and GST proportionally to the user's share of the subtotal. Because of the per-user rounding, shares may not sum exactly to the total (the Report shows a disclaimer about 1–2 cent discrepancies).
 - `compute*` methods are recomputed on every call (no memoization) and read from current render state.
+
+### Sharing: `src/share/`, `src/Share.tsx`, `src/hooks/use-shared-bill.ts`
+
+A bill is shared as `<page URL>?share=<token>`; opening such a link renders the bill read-only (`readOnly` prop on `Users`, `Items`, `Taxes`, `WhoPaid`; `App` shows a banner and a "New bill" button that clears the param).
+
+- `share/format.ts` defines the **versioned** serialized shape (`v` field, `CURRENT_VERSION`), `serializeBill` (BillData → JSON, users referenced by index, BigNumbers as strings, ids dropped) and `parseBill` (untrusted JSON → validated BillData with fresh uuids). Old links must keep working: to change the format, bump `CURRENT_VERSION`, add `migrations[oldVersion]`, and update `serializeBill`/`toBillData`. Never change the meaning of an existing version.
+- `share/codec.ts` is deflate-raw (`CompressionStream`, no dependency) + unpadded URL-safe base64. Decoding accepts standard base64 too and caps decompressed size at 1 MB. Both directions are async.
+- Everything decoded from a link is untrusted: validate in `format.ts` and throw `ShareError` (its message is shown to the user).
+- `useBill(initial?)` accepts the decoded bill as initial state; `App` decodes before mounting `Bill`, since hook state can only be seeded on first render.
 
 ### UI
 

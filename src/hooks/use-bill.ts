@@ -53,16 +53,18 @@ export type BillMethods = {
   computeUserShare: (userId: string) => BigNumber
 }
 
-const useBill = (): {
+const useBill = (
+  initial?: BillData
+): {
   data: BillData
   methods: BillMethods
 } => {
-  const [users, setUsers] = useState<User[]>([])
-  const [items, setItems] = useState<Item[]>([])
-  const [payer, setPayer] = useState<string>()
-  const [serviceTax, setServiceTax] = useState<TaxSetting>({ enable: true, percentage: new BigNumber(10) })
-  const [gstTax, setGstTax] = useState<TaxSetting>({ enable: true, percentage: new BigNumber(9) })
-  const [userItems, setUserItems] = useState<UserItem[]>([])
+  const [users, setUsers] = useState<User[]>(initial?.users ?? [])
+  const [items, setItems] = useState<Item[]>(initial?.items ?? [])
+  const [payer, setPayer] = useState<string | undefined>(initial?.payer)
+  const [serviceTax, setServiceTax] = useState<TaxSetting>(initial?.serviceTax ?? { enable: true, percentage: new BigNumber(10) })
+  const [gstTax, setGstTax] = useState<TaxSetting>(initial?.gstTax ?? { enable: true, percentage: new BigNumber(9) })
+  const [userItems, setUserItems] = useState<UserItem[]>(initial?.userItems ?? [])
 
   const computeSubtotal = () => {
     let subtotal = new BigNumber(0)

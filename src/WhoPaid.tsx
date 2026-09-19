@@ -8,10 +8,11 @@ import FlexBox from './components/FlexBox'
 interface WhoPaidProps {
   data: BillData
   methods: BillMethods
+  readOnly?: boolean
 }
 
 const WhoPaid = (props: WhoPaidProps) => {
-  const { data, methods } = props
+  const { data, methods, readOnly } = props
 
   const setWhoPaid = (userId: string) => {
     if (data.payer === userId) {
@@ -21,7 +22,7 @@ const WhoPaid = (props: WhoPaidProps) => {
     }
   }
 
-  if (data.users.length === 0) {
+  if (data.users.length === 0 || (readOnly && !data.payer)) {
     return null
   }
 
@@ -29,10 +30,10 @@ const WhoPaid = (props: WhoPaidProps) => {
     <SectionContainer>
       <Section sx={{ p: 2 }}>
         <Stack spacing={2}>
-          <Typography sx={{ fontWeight: 'bold' }}>Select the person who paid for the bill</Typography>
+          <Typography sx={{ fontWeight: 'bold' }}>{readOnly ? 'Paid by' : 'Select the person who paid for the bill'}</Typography>
           <FlexBox sx={{ gap: 0.5, justifyContent: 'center' }}>
             {data.users.map(user => (
-              <PersonChip key={user.id} variant='filled' user={user} onClick={() => setWhoPaid(user.id)} color={user.id === data.payer ? 'primary' : 'default'} />
+              <PersonChip key={user.id} variant='filled' user={user} onClick={readOnly ? undefined : () => setWhoPaid(user.id)} color={user.id === data.payer ? 'primary' : 'default'} />
             ))}
           </FlexBox>
         </Stack>
