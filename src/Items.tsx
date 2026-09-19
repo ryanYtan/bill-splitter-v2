@@ -22,7 +22,7 @@ const Items = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
       <SectionContainer>
         {data.items.length === 0 && (
           <Section sx={{ p: 2 }}>
-            <Typography fontWeight='bold' sx={{ textAlign: 'center' }}>
+            <Typography sx={{ fontWeight: 'bold', textAlign: 'center' }}>
               Click ADD ITEM below to add items to this bill
             </Typography>
           </Section>
@@ -36,7 +36,7 @@ const Items = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
                 </IconButton>
               </FlexBox>
               <Box sx={{ width: 200 }}>
-                <Typography fontWeight='bold' noWrap>
+                <Typography noWrap sx={{ fontWeight: 'bold' }}>
                   {item.name}
                 </Typography>
                 <Typography variant='subtitle2'>

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { NumericFormat } from 'react-number-format'
 import { BillData, BillMethods } from '../hooks/use-bill'
 import FlexBox from './FlexBox'
-import Grid from '@mui/material/Grid2'
+import Grid from '@mui/material/Grid'
 import BigNumber from 'bignumber.js'
 
 interface ItemFormProps {

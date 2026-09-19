@@ -29,7 +29,7 @@ const WhoPaid = (props: WhoPaidProps) => {
     <SectionContainer>
       <Section sx={{ p: 2 }}>
         <Stack spacing={2}>
-          <Typography fontWeight='bold'>Select the person who paid for the bill</Typography>
+          <Typography sx={{ fontWeight: 'bold' }}>Select the person who paid for the bill</Typography>
           <FlexBox sx={{ gap: 0.5, justifyContent: 'center' }}>
             {data.users.map(user => (
               <PersonChip variant='filled' user={user} onClick={() => setWhoPaid(user.id)} color={user.id === data.payer ? 'primary' : 'default'} />

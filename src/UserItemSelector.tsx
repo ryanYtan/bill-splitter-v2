@@ -33,7 +33,7 @@ const UserItemSelector = (props: UserItemSelectorProps) => {
           <Section sx={{ p: 2 }}>
             <Stack spacing={2}>
               <Box>
-                <Typography fontWeight='bold' noWrap>
+                <Typography noWrap sx={{ fontWeight: 'bold' }}>
                   {props.item.name}
                 </Typography>
                 <Typography variant='subtitle2'>

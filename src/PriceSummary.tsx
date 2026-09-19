@@ -20,7 +20,7 @@ const PriceSummary = (props: PriceSummaryProps) => {
           <Tooltip title='Computed as the total of all items before any taxes'>
             <InfoOutlinedIcon fontSize='small' />
           </Tooltip>
-          <Typography fontWeight='bold'>SUBTOTAL:</Typography>
+          <Typography sx={{ fontWeight: 'bold' }}>SUBTOTAL:</Typography>
           <FlexBox sx={{ justifyContent: 'flex-end', width: 80 }}>
             <Typography>${methods.computeSubtotal().toFixed(2)}</Typography>
           </FlexBox>
@@ -32,7 +32,7 @@ const PriceSummary = (props: PriceSummaryProps) => {
             <Tooltip title={`Computed as ${data.serviceTax.percentage}% of the subtotal`}>
               <InfoOutlinedIcon fontSize='small' />
             </Tooltip>
-            <Typography fontWeight='bold'>SERVICE CHARGE:</Typography>
+            <Typography sx={{ fontWeight: 'bold' }}>SERVICE CHARGE:</Typography>
             <FlexBox sx={{ justifyContent: 'flex-end', width: 80 }}>
               <Typography>${methods.computeServiceTax().toFixed(2)}</Typography>
             </FlexBox>
@@ -45,7 +45,7 @@ const PriceSummary = (props: PriceSummaryProps) => {
             <Tooltip title={`Computed as ${data.gstTax.percentage}% of the sum of the subtotal and service charge`}>
               <InfoOutlinedIcon fontSize='small' />
             </Tooltip>
-            <Typography fontWeight='bold'>GST:</Typography>
+            <Typography sx={{ fontWeight: 'bold' }}>GST:</Typography>
             <FlexBox sx={{ justifyContent: 'flex-end', width: 80 }}>
               <Typography>${methods.computeGstTax().toFixed(2)}</Typography>
             </FlexBox>
@@ -57,7 +57,7 @@ const PriceSummary = (props: PriceSummaryProps) => {
           <Tooltip title={`Computed as the sum of the subtotal, service charge, and GST`}>
             <InfoOutlinedIcon fontSize='small' />
           </Tooltip>
-          <Typography fontWeight='bold'>TOTAL:</Typography>
+          <Typography sx={{ fontWeight: 'bold' }}>TOTAL:</Typography>
           <FlexBox sx={{ justifyContent: 'flex-end', width: 80 }}>
             <Typography>${methods.computeTotal().toFixed(2)}</Typography>
           </FlexBox>

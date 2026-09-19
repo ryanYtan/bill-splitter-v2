@@ -25,10 +25,10 @@ const Report = (props: ReportProps) => {
       <Section sx={{ p: 2 }}>
         <Stack spacing={2}>
           <Box>
-            <Typography fontSize={14} fontWeight='bold'>
+            <Typography sx={{ fontSize: 14, fontWeight: 'bold' }}>
               BILL SUMMARY
             </Typography>
-            <Typography fontWeight={400} variant='subtitle2'>
+            <Typography variant='subtitle2' sx={{ fontWeight: 400 }}>
               <em>Actual shares may be off by 1-2 cents due to rounding errors</em>
             </Typography>
           </Box>
@@ -59,25 +59,25 @@ const Report = (props: ReportProps) => {
           <Box>
             <FlexBox>
               <Box sx={{ width: 120 }}>
-                <Typography fontWeight='bold'>SUBTOTAL:</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>SUBTOTAL:</Typography>
               </Box>
               <Typography>${methods.computeSubtotal().toFixed(2)}</Typography>
             </FlexBox>
             <FlexBox>
               <Box sx={{ width: 120 }}>
-                <Typography fontWeight='bold'>SERVICE CHARGE:</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>SERVICE CHARGE:</Typography>
               </Box>
               <Typography>${methods.computeServiceTax().toFixed(2)}</Typography>
             </FlexBox>
             <FlexBox>
               <Box sx={{ width: 120 }}>
-                <Typography fontWeight='bold'>GST:</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>GST:</Typography>
               </Box>
               <Typography>${methods.computeGstTax().toFixed(2)}</Typography>
             </FlexBox>
             <FlexBox>
               <Box sx={{ width: 120 }}>
-                <Typography fontWeight='bold'>TOTAL:</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>TOTAL:</Typography>
               </Box>
               <Typography>${methods.computeTotal().toFixed(2)}</Typography>
             </FlexBox>

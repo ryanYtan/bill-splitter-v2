@@ -17,7 +17,7 @@ const Taxes = (props: TaxesProps) => {
       <Section sx={{ py: 1, px: 2 }}>
         <FlexBox sx={{ justifyContent: 'space-between' }}>
           <FlexBox>
-            <Typography fontWeight='bold'>APPLY</Typography>
+            <Typography sx={{ fontWeight: 'bold' }}>APPLY</Typography>
             <NumericFormat
               isAllowed={values => {
                 const { formattedValue, floatValue } = values
@@ -38,7 +38,7 @@ const Taxes = (props: TaxesProps) => {
                 width: 50,
               }}
             />
-            <Typography fontWeight='bold'>SERVICE CHARGE</Typography>
+            <Typography sx={{ fontWeight: 'bold' }}>SERVICE CHARGE</Typography>
           </FlexBox>
           <FlexBox sx={{ justifyContent: 'flex-end' }}>
             <Checkbox checked={props.data.serviceTax.enable} onChange={e => props.methods.setServiceTaxEnabled(e.target.checked)} />
@@ -48,7 +48,7 @@ const Taxes = (props: TaxesProps) => {
       <Section sx={{ py: 1, px: 2 }}>
         <FlexBox sx={{ justifyContent: 'space-between' }}>
           <FlexBox>
-            <Typography fontWeight='bold'>APPLY</Typography>
+            <Typography sx={{ fontWeight: 'bold' }}>APPLY</Typography>
             <NumericFormat
               isAllowed={values => {
                 const { formattedValue, floatValue } = values
@@ -69,7 +69,7 @@ const Taxes = (props: TaxesProps) => {
                 width: 50,
               }}
             />
-            <Typography fontWeight='bold'>GST</Typography>
+            <Typography sx={{ fontWeight: 'bold' }}>GST</Typography>
           </FlexBox>
           <FlexBox sx={{ justifyContent: 'flex-end' }}>
             <Checkbox checked={props.data.gstTax.enable} onChange={e => props.methods.setGstTaxEnabled(e.target.checked)} />
