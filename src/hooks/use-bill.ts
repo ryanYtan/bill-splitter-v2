@@ -112,7 +112,11 @@ const useBill = (): {
       const shareForItem = subtotalOfItem.dividedBy(numOfContributorsForItem.length)
       share = share.plus(shareForItem)
     }
-    const shareAsProportion = share.dividedBy(computeSubtotal()) //a number between 0 and 1
+    const subtotal = computeSubtotal()
+    if (subtotal.isZero()) {
+      return new BigNumber(0)
+    }
+    const shareAsProportion = share.dividedBy(subtotal) //a number between 0 and 1
     const shareOfServiceCharge = shareAsProportion.multipliedBy(computeServiceTax())
     const shareOfGst = shareAsProportion.multipliedBy(computeGstTax())
     return share.plus(shareOfServiceCharge).plus(shareOfGst).decimalPlaces(2, BigNumber.ROUND_UP)

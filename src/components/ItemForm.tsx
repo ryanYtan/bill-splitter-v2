@@ -78,7 +78,7 @@ const ItemForm = (props: ItemFormProps) => {
               },
             }}
             value={price}
-            onChange={e => setPrice(Number.parseFloat(e.target.value.replace(',', '')))}
+            onChange={e => setPrice(Number.parseFloat(e.target.value.replace(/,/g, '')))}
           />
         </Box>
         <Box>

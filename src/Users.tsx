@@ -94,7 +94,7 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
         }}
       />
       <Snackbar open={open} onClose={() => setOpen(false)} autoHideDuration={5000}>
-        <Alert severity='error'>Please enter a name less than 20 characters</Alert>
+        <Alert severity='error'>Please enter a name of 20 characters or fewer</Alert>
       </Snackbar>
     </>
   )
