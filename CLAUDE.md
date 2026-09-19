@@ -13,7 +13,7 @@ Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 en
 
 ## Architecture
 
-Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `master`. There is no backend or persistence; all state is in memory.
+Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `master` (the workflow copies `dist/index.html` to `dist/404.html` so deep links like `/s/:slug` work on Pages). There is no backend or persistence; all state is in memory.
 
 **The repo name is hardcoded in two places that must stay in sync:** `base` in `vite.config.ts` and the `PROG` constant in `src/main.tsx` (used as the route prefix: `/bill-splitter-v2` and `/bill-splitter-v2/s/:slug`). The `/s/:slug` route renders `App` but nothing reads `slug` yet (reserved for shared bills).
 
