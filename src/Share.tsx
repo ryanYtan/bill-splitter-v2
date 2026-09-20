@@ -1,5 +1,9 @@
-import { Alert, IconButton, InputAdornment, Snackbar, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Button, IconButton, InputAdornment, Snackbar, Stack, TextField, Typography } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import IosShareIcon from '@mui/icons-material/IosShare'
+import TelegramIcon from '@mui/icons-material/Telegram'
+import WhatsAppIcon from '@mui/icons-material/WhatsApp'
+import FlexBox from './components/FlexBox'
 import { useEffect, useState } from 'react'
 import { BillData } from './hooks/use-bill'
 import { useToastPlacement } from './hooks/use-toast-placement'
@@ -15,6 +19,8 @@ const buildShareUrl = (token: string): string => {
   url.searchParams.set('share', token)
   return url.toString()
 }
+
+const SHARE_TEXT = 'Here is our bill:'
 
 const Share = ({ data }: { data: BillData }) => {
   const [link, setLink] = useState('')
@@ -45,6 +51,21 @@ const Share = ({ data }: { data: BillData }) => {
     }
   }
 
+  // The native share sheet (mobile, some desktops) lists every installed app, so it covers more than the fixed buttons below.
+  const canNativeShare = typeof navigator.share === 'function'
+  const nativeShare = async () => {
+    try {
+      await navigator.share({ title: 'Bill Splitter', text: SHARE_TEXT, url: link })
+    } catch (e) {
+      // Dismissing the sheet rejects with AbortError; that is not a failure.
+      if (!(e instanceof DOMException && e.name === 'AbortError')) {
+        setSnackbar({ message: 'Could not open the share menu. Try copying the link instead.', severity: 'error' })
+      }
+    }
+  }
+  const whatsAppHref = `https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT} ${link}`)}`
+  const telegramHref = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(SHARE_TEXT)}`
+
   return (
     <SectionContainer>
       <Section sx={{ p: 2 }}>
@@ -69,6 +90,19 @@ const Share = ({ data }: { data: BillData }) => {
               },
             }}
           />
+          <FlexBox>
+            {canNativeShare && (
+              <Button size='small' variant='outlined' startIcon={<IosShareIcon />} disabled={!link} onClick={nativeShare}>
+                Share
+              </Button>
+            )}
+            <Button size='small' variant='outlined' startIcon={<WhatsAppIcon />} disabled={!link} href={whatsAppHref} target='_blank' rel='noopener noreferrer'>
+              WhatsApp
+            </Button>
+            <Button size='small' variant='outlined' startIcon={<TelegramIcon />} disabled={!link} href={telegramHref} target='_blank' rel='noopener noreferrer'>
+              Telegram
+            </Button>
+          </FlexBox>
         </Stack>
       </Section>
       <Snackbar open={!!snackbar} onClose={() => setSnackbar(undefined)} autoHideDuration={3000} {...snackbarProps}>

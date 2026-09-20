@@ -35,6 +35,7 @@ A bill is shared as `<page URL>?share=<token>`; opening such a link renders the 
 - `share/format.ts` defines the **versioned** serialized shape (`v` field, `CURRENT_VERSION`), `serializeBill` (BillData → JSON, users referenced by index, BigNumbers as strings, ids dropped) and `parseBill` (untrusted JSON → validated BillData with fresh uuids). Old links must keep working: to change the format, bump `CURRENT_VERSION`, add `migrations[oldVersion]`, and update `serializeBill`/`toBillData`. Never change the meaning of an existing version.
 - `share/codec.ts` is deflate-raw (`CompressionStream`, no dependency) + unpadded URL-safe base64. Decoding accepts standard base64 too and caps decompressed size at 1 MB. Both directions are async.
 - Everything decoded from a link is untrusted: validate in `format.ts` and throw `ShareError` (its message is shown to the user).
+- `Share.tsx` also offers WhatsApp and Telegram buttons (plain `wa.me` / `t.me/share/url` links) and a "Share" button that calls `navigator.share` only when the browser supports it (the native sheet lists every installed app). Adding another target is just another link built from `link`.
 - `useBill(initial?)` accepts the decoded bill as initial state; `App` decodes before mounting `Bill`, since hook state can only be seeded on first render.
 
 ### Receipt scanning: `src/components/ReceiptScanner.tsx`, `src/ocr/parse-receipt.ts`
