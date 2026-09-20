@@ -42,10 +42,10 @@ const Share = ({ data }: { data: BillData }) => {
     }
   }, [json])
 
-  const copy = async () => {
+  const copy = async (successMessage = 'Link copied to clipboard') => {
     try {
       await navigator.clipboard.writeText(link)
-      setSnackbar({ message: 'Link copied to clipboard', severity: 'success' })
+      setSnackbar({ message: successMessage, severity: 'success' })
     } catch {
       setSnackbar({ message: 'Could not copy automatically. Please copy the link manually.', severity: 'error' })
     }
@@ -57,10 +57,14 @@ const Share = ({ data }: { data: BillData }) => {
     try {
       await navigator.share({ title: 'Bill Splitter', text: SHARE_TEXT, url: link })
     } catch (e) {
-      // Dismissing the sheet rejects with AbortError; that is not a failure.
-      if (!(e instanceof DOMException && e.name === 'AbortError')) {
-        setSnackbar({ message: 'Could not open the share menu. Try copying the link instead.', severity: 'error' })
+      // Dismissing the sheet rejects with AbortError; that is not a failure. Match by name: not every browser throws a DOMException.
+      if ((e as { name?: string } | null)?.name === 'AbortError') {
+        return
       }
+      // Some browsers keep the previous share pending after the sheet is dismissed and reject the next call
+      // (InvalidStateError), so fall back to something that always works rather than showing an error.
+      console.warn('navigator.share failed', e)
+      await copy('Share menu unavailable, link copied to clipboard')
     }
   }
   const whatsAppHref = `https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT} ${link}`)}`
@@ -82,7 +86,7 @@ const Share = ({ data }: { data: BillData }) => {
                 readOnly: true,
                 endAdornment: (
                   <InputAdornment position='end'>
-                    <IconButton size='small' aria-label='Copy link' disabled={!link} onClick={copy}>
+                    <IconButton size='small' aria-label='Copy link' disabled={!link} onClick={() => copy()}>
                       <ContentCopyIcon />
                     </IconButton>
                   </InputAdornment>
