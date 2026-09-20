@@ -1,6 +1,7 @@
 import { Alert, Chip, IconButton, InputAdornment, Snackbar, Stack, TextField, Tooltip } from '@mui/material'
 import { BillData, BillMethods } from './hooks/use-bill'
 import { useState } from 'react'
+import { useToastPlacement } from './hooks/use-toast-placement'
 import ShuffleIcon from '@mui/icons-material/Shuffle'
 import { randomNames } from './constants/constants'
 import PersonChip from './components/PersonChip'
@@ -51,6 +52,7 @@ const Users = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
 const UserInput = (props: { data: BillData; methods: BillMethods }) => {
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
+  const { snackbarProps, contentSx } = useToastPlacement()
 
   const addRandomUser = () => {
     const takenNames = new Set(props.data.users.map(user => user.name))
@@ -60,45 +62,55 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
     }
   }
 
+  // A real form so the mobile keyboard's action key submits (a bare keydown handler is not reliably fired by soft keyboards,
+  // and with more inputs below the key would otherwise be "Next" and just move focus).
+  const addTypedUser = () => {
+    const name = value.trim()
+    if (!name) {
+      return
+    }
+    if (name.length > 20) {
+      setOpen(true)
+      return
+    }
+    props.methods.addUser(name)
+    setValue('')
+  }
+
   return (
     <>
-      <TextField
-        fullWidth
-        size='small'
-        placeholder='Enter names (RETURN to add name)'
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter' && !!value) {
-            e.preventDefault()
-            const name = value.trim()
-            if (!name) {
-              return
-            }
-            if (name.length > 20) {
-              setOpen(true)
-              return
-            }
-            props.methods.addUser(name)
-            setValue('')
-          }
+      <form
+        onSubmit={e => {
+          e.preventDefault()
+          addTypedUser()
         }}
-        slotProps={{
-          input: {
-            endAdornment: (
-              <InputAdornment position='end'>
-                <Tooltip title='Add random name'>
-                  <IconButton size='small' onClick={() => addRandomUser()}>
-                    <ShuffleIcon />
-                  </IconButton>
-                </Tooltip>
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
-      <Snackbar open={open} onClose={() => setOpen(false)} autoHideDuration={5000}>
-        <Alert severity='error'>Please enter a name of 20 characters or fewer</Alert>
+      >
+        <TextField
+          fullWidth
+          size='small'
+          placeholder='Enter names (RETURN to add name)'
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          slotProps={{
+            htmlInput: { enterKeyHint: 'enter' },
+            input: {
+              endAdornment: (
+                <InputAdornment position='end'>
+                  <Tooltip title='Add random name'>
+                    <IconButton size='small' onClick={() => addRandomUser()}>
+                      <ShuffleIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </form>
+      <Snackbar open={open} onClose={() => setOpen(false)} autoHideDuration={5000} {...snackbarProps}>
+        <Alert severity='error' sx={contentSx}>
+          Please enter a name of 20 characters or fewer
+        </Alert>
       </Snackbar>
     </>
   )

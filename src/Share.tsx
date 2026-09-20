@@ -2,6 +2,7 @@ import { Alert, IconButton, InputAdornment, Snackbar, Stack, TextField, Typograp
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { useEffect, useState } from 'react'
 import { BillData } from './hooks/use-bill'
+import { useToastPlacement } from './hooks/use-toast-placement'
 import Section from './components/Section/Section'
 import SectionContainer from './components/Section/SectionContainer'
 import { compressToBase64Url } from './share/codec'
@@ -18,6 +19,7 @@ const buildShareUrl = (token: string): string => {
 const Share = ({ data }: { data: BillData }) => {
   const [link, setLink] = useState('')
   const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' }>()
+  const { snackbarProps, contentSx } = useToastPlacement()
 
   // `data` is a new object on every render, so key the effect on the serialized bill instead
   const json = serializeBill(data)
@@ -69,8 +71,10 @@ const Share = ({ data }: { data: BillData }) => {
           />
         </Stack>
       </Section>
-      <Snackbar open={!!snackbar} onClose={() => setSnackbar(undefined)} autoHideDuration={3000}>
-        <Alert severity={snackbar?.severity}>{snackbar?.message}</Alert>
+      <Snackbar open={!!snackbar} onClose={() => setSnackbar(undefined)} autoHideDuration={3000} {...snackbarProps}>
+        <Alert severity={snackbar?.severity} sx={contentSx}>
+          {snackbar?.message}
+        </Alert>
       </Snackbar>
     </SectionContainer>
   )

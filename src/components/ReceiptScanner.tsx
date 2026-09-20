@@ -1,6 +1,7 @@
-import { Alert, Box, Button, Dialog, LinearProgress, Snackbar, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { Alert, Box, Button, Dialog, LinearProgress, Snackbar, Typography } from '@mui/material'
 import { useRef, useState } from 'react'
 import { BillData, BillMethods } from '../hooks/use-bill'
+import { useToastPlacement } from '../hooks/use-toast-placement'
 import { parseReceiptText } from '../ocr/parse-receipt'
 import { MAX_ITEMS, MAX_TEXT_LENGTH } from '../share/format'
 import SectionContainer from './Section/SectionContainer'
@@ -10,8 +11,7 @@ type Status = { kind: 'idle' } | { kind: 'scanning'; label: string; progress: nu
 
 const ReceiptScanner = ({ data, methods }: { data: BillData; methods: BillMethods }) => {
   const inputRef = useRef<HTMLInputElement>(null)
-  // On mobile the on-screen keyboard covers the bottom edge, so show the toast full-width at the top.
-  const isMobile = useMediaQuery(useTheme().breakpoints.down('sm'))
+  const { snackbarProps, contentSx } = useToastPlacement()
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
   const [added, setAdded] = useState<string[]>([])
 
@@ -95,9 +95,8 @@ const ReceiptScanner = ({ data, methods }: { data: BillData; methods: BillMethod
       </Dialog>
       <Snackbar
         open={added.length > 0}
-        anchorOrigin={{ vertical: isMobile ? 'top' : 'bottom', horizontal: isMobile ? 'center' : 'left' }}
-        sx={isMobile ? { left: 0, right: 0, top: 0 } : undefined}
-        slotProps={{ content: { sx: isMobile ? { width: '100%', minWidth: 0, borderRadius: 0, flexGrow: 1 } : undefined } }}
+        {...snackbarProps}
+        slotProps={{ content: { sx: contentSx } }}
         autoHideDuration={10000}
         onClose={(_, reason) => reason !== 'clickaway' && setAdded([])}
         message={`Added ${added.length} item${added.length === 1 ? '' : 's'} from receipt`}
