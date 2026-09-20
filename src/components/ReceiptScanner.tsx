@@ -61,7 +61,7 @@ const ReceiptScanner = ({ data, methods }: { data: BillData; methods: BillMethod
           if (file) void scan(file)
         }}
       />
-      <Button fullWidth onClick={() => inputRef.current?.click()} disabled={status.kind === 'scanning'}>
+      <Button fullWidth onClick={() => inputRef.current?.click()} disabled={status.kind === 'scanning'} sx={{ borderRadius: theme => `0px 0px ${theme.shape.borderRadius}px 0px` }}>
         Scan Receipt
       </Button>
       <Dialog open={status.kind !== 'idle'} onClose={status.kind === 'error' ? () => setStatus({ kind: 'idle' }) : undefined} fullWidth maxWidth='xs'>

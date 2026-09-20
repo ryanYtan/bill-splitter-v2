@@ -1,4 +1,4 @@
-import { Box, Button, Dialog, IconButton, Typography } from '@mui/material'
+import { Box, Button, Dialog, Divider, IconButton, Typography } from '@mui/material'
 import { BillData, BillMethods } from './hooks/use-bill'
 import { useState } from 'react'
 import Section from './components/Section/Section'
@@ -58,10 +58,11 @@ const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
         ))}
         {!readOnly && (
           <Section>
-            <FlexBox>
+            <FlexBox sx={{ gap: 0, flexWrap: 'nowrap' }}>
               <Button fullWidth onClick={() => setOpen(true)} sx={{ borderRadius: theme => `0px 0px 0px ${theme.shape.borderRadius}px` }}>
                 Add Item
               </Button>
+              <Divider orientation='vertical' flexItem />
               <ReceiptScanner data={data} methods={methods} />
             </FlexBox>
           </Section>
