@@ -1,5 +1,5 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+# Builds the app and deploys it to https://anmitsu.dev/a/billsplit (S3 behind CloudFront)
+name: Deploy to anmitsu.dev
 
 on:
   # Runs on pushes targeting the default branch
@@ -9,23 +9,25 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
+# id-token lets the job exchange its GitHub OIDC token for short-lived AWS credentials (no stored secrets)
 permissions:
   contents: read
-  pages: write
   id-token: write
 
 # Allow one concurrent deployment
 concurrency:
-  group: 'pages'
+  group: 'deploy'
   cancel-in-progress: true
 
+env:
+  AWS_REGION: ap-southeast-1
+  # Only assumable by this repo's master branch, and only allowed to write under S3_URI and invalidate the distribution
+  AWS_ROLE_ARN: arn:aws:iam::816057347081:role/github-bill-splitter-deploy
+  S3_URI: s3://anmitsu-dev-frontend/a/billsplit
+  CLOUDFRONT_DISTRIBUTION_ID: E1YMFP7OO0CUWS
+
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,13 +43,15 @@ jobs:
         run: yarn test
       - name: Build
         run: yarn build
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          # Upload dist folder
-          path: './dist'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      # Asset file names contain a content hash, so they can be cached forever; index.html must always be revalidated
+      - name: Upload assets
+        run: aws s3 sync dist/ "$S3_URI/" --delete --exclude index.html --cache-control "public,max-age=31536000,immutable"
+      - name: Upload index.html
+        run: aws s3 cp dist/index.html "$S3_URI/index.html" --cache-control "no-cache"
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/a/billsplit*"

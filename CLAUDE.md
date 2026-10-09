@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 enforces it via `engines`; CI uses Node 24).
 
-- `yarn dev` — Vite dev server. The app is served under the base path `/bill-splitter-v2/`, so open `http://localhost:5173/bill-splitter-v2/`.
+- `yarn dev` — Vite dev server. The app is served under the base path `/a/billsplit/`, so open `http://localhost:5173/a/billsplit/`.
 - `yarn build` — `tsc -b && vite build` (type-check is part of the build; `strict`, `noUnusedLocals`, `noUnusedParameters` are on).
 - `yarn test` — Vitest, single run (`yarn vitest` to watch, `yarn vitest run src/bill/calc.test.ts` for one file). Tests sit next to the code as `*.test.ts`, run in the default Node environment (no DOM), and cover the pure modules only. CI runs them before the build, so a failing test blocks the deploy.
 - `yarn lint` — ESLint (flat config, typescript-eslint recommended + react-hooks + react-refresh).
@@ -14,9 +14,13 @@ Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 en
 
 ## Architecture
 
-Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `master`. There is no backend or persistence; all state is in memory.
+Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to `https://anmitsu.dev/a/billsplit` by `.github/workflows/deploy.yml` on push to `master`. There is no backend or persistence; all state is in memory.
 
-The repo name is set once, as `base` in `vite.config.ts`; `src/main.tsx` passes `import.meta.env.BASE_URL` (minus the trailing slash) to the router as `basename`. Sharing uses a query string (`?share=`), not extra routes, so GitHub Pages needs no SPA fallback.
+The path the app is served under is set once, as `base` in `vite.config.ts`; `src/main.tsx` passes `import.meta.env.BASE_URL` (minus the trailing slash) to the router as `basename`. Sharing uses a query string (`?share=`), not extra routes, so the host needs no SPA fallback.
+
+### Hosting
+
+The build is static files in the S3 bucket `anmitsu-dev-frontend` under `a/billsplit/`, served by the CloudFront distribution for `anmitsu.dev` (`E1YMFP7OO0CUWS`, set up by hand, not IaC). That distribution's default behaviour is another app behind basic auth; the `/a/billsplit*` behaviour is public and uses the `append-index-html` CloudFront Function (shared with another distribution) to map `/a/billsplit` and `/a/billsplit/` to `index.html`. The workflow assumes the IAM role `github-bill-splitter-deploy` through GitHub OIDC (trusted only for this repo's `master` branch; it can write under that S3 prefix and create invalidations, nothing else), uploads hashed assets as immutable and `index.html` as `no-cache`, then invalidates `/a/billsplit*`. Moving the app to another path means changing `base`, the workflow's `S3_URI` and invalidation path, the role's policy, and the CloudFront behaviour together.
 
 ### State: `src/hooks/use-bill.ts`
 
