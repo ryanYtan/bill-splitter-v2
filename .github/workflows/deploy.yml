@@ -21,10 +21,11 @@ concurrency:
 
 env:
   AWS_REGION: ap-southeast-1
-  # Only assumable by this repo's master branch, and only allowed to write under S3_URI and invalidate the distribution
-  AWS_ROLE_ARN: arn:aws:iam::816057347081:role/github-bill-splitter-deploy
   S3_URI: s3://anmitsu-dev-frontend/a/billsplit
-  CLOUDFRONT_DISTRIBUTION_ID: E1YMFP7OO0CUWS
+  # Repository variables (Settings -> Secrets and variables -> Actions -> Variables). The role is only assumable by
+  # this repo's master branch, and only allowed to write under S3_URI and invalidate the distribution.
+  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
 
 jobs:
   deploy:
