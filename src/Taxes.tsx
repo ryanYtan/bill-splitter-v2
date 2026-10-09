@@ -1,18 +1,16 @@
 import { Checkbox, InputAdornment, TextField, Typography } from '@mui/material'
-import { BillData, BillMethods } from './hooks/use-bill'
+import { BillData, BillMethods, TaxSetting } from './hooks/use-bill'
 import { NumericFormat } from 'react-number-format'
 import FlexBox from './components/FlexBox'
 import SectionContainer from './components/Section/SectionContainer'
 import Section from './components/Section/Section'
-import BigNumber from 'bignumber.js'
+import { parsePercentage } from './bill/validate'
 
 interface TaxRowProps {
   label: string
-  percentage: BigNumber
-  enabled: boolean
+  tax: TaxSetting
   readOnly?: boolean
-  onPercentageChange: (percentage: BigNumber) => void
-  onEnabledChange: (enabled: boolean) => void
+  onChange: (patch: Partial<TaxSetting>) => void
 }
 
 const TaxRow = (props: TaxRowProps) => {
@@ -24,12 +22,12 @@ const TaxRow = (props: TaxRowProps) => {
           <NumericFormat
             isAllowed={values => {
               const { formattedValue, floatValue } = values
-              return formattedValue === '' || (!!floatValue && 0 <= floatValue && floatValue <= 100)
+              return formattedValue === '' || (floatValue !== undefined && 0 <= floatValue && floatValue <= 100)
             }}
             decimalScale={2}
             allowLeadingZeros={false}
-            value={props.percentage.toNumber()}
-            onChange={e => props.onPercentageChange(new BigNumber(e.target.value))}
+            value={props.tax.percentage.toNumber()}
+            onChange={e => props.onChange({ percentage: parsePercentage(e.target.value) })}
             customInput={TextField}
             variant='standard'
             slotProps={{
@@ -45,7 +43,7 @@ const TaxRow = (props: TaxRowProps) => {
           <Typography sx={{ fontWeight: 'bold' }}>{props.label}</Typography>
         </FlexBox>
         <FlexBox sx={{ justifyContent: 'flex-end' }}>
-          <Checkbox checked={props.enabled} disabled={props.readOnly} onChange={e => props.onEnabledChange(e.target.checked)} />
+          <Checkbox checked={props.tax.enable} disabled={props.readOnly} onChange={e => props.onChange({ enable: e.target.checked })} />
         </FlexBox>
       </FlexBox>
     </Section>
@@ -61,8 +59,8 @@ interface TaxesProps {
 const Taxes = ({ data, methods, readOnly }: TaxesProps) => {
   return (
     <SectionContainer>
-      <TaxRow label='SERVICE CHARGE' percentage={data.serviceTax.percentage} enabled={data.serviceTax.enable} readOnly={readOnly} onPercentageChange={methods.setServiceTax} onEnabledChange={methods.setServiceTaxEnabled} />
-      <TaxRow label='GST' percentage={data.gstTax.percentage} enabled={data.gstTax.enable} readOnly={readOnly} onPercentageChange={methods.setGstTax} onEnabledChange={methods.setGstTaxEnabled} />
+      <TaxRow label='SERVICE CHARGE' tax={data.serviceTax} readOnly={readOnly} onChange={patch => methods.setTax('serviceTax', patch)} />
+      <TaxRow label='GST' tax={data.gstTax} readOnly={readOnly} onChange={patch => methods.setTax('gstTax', patch)} />
     </SectionContainer>
   )
 }

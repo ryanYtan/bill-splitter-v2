@@ -1,7 +1,8 @@
-import { Alert, Chip, IconButton, InputAdornment, Snackbar, Stack, TextField, Tooltip } from '@mui/material'
+import { Chip, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material'
 import { BillData, BillMethods } from './hooks/use-bill'
 import { useState } from 'react'
-import { useToastPlacement } from './hooks/use-toast-placement'
+import Toast from './components/Toast'
+import { validateUserName } from './bill/validate'
 import ShuffleIcon from '@mui/icons-material/Shuffle'
 import { randomNames } from './constants/constants'
 import PersonChip from './components/PersonChip'
@@ -51,14 +52,25 @@ const Users = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
 
 const UserInput = (props: { data: BillData; methods: BillMethods }) => {
   const [value, setValue] = useState('')
-  const [open, setOpen] = useState(false)
-  const { snackbarProps, contentSx } = useToastPlacement()
+  // The message is kept while the toast fades out, so only `open` is cleared on close
+  const [error, setError] = useState({ open: false, message: '' })
+
+  // Returns whether the name was accepted
+  const addUser = (name: string): boolean => {
+    const message = validateUserName(name, props.data.users)
+    if (message) {
+      setError({ open: true, message })
+      return false
+    }
+    props.methods.addUser(name)
+    return true
+  }
 
   const addRandomUser = () => {
     const takenNames = new Set(props.data.users.map(user => user.name))
     const availableNames = randomNames.filter(name => !takenNames.has(name))
     if (availableNames.length > 0) {
-      props.methods.addUser(availableNames[Math.floor(Math.random() * availableNames.length)])
+      addUser(availableNames[Math.floor(Math.random() * availableNames.length)])
     }
   }
 
@@ -69,12 +81,9 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
     if (!name) {
       return
     }
-    if (name.length > 20) {
-      setOpen(true)
-      return
+    if (addUser(name)) {
+      setValue('')
     }
-    props.methods.addUser(name)
-    setValue('')
   }
 
   return (
@@ -107,11 +116,9 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
           }}
         />
       </form>
-      <Snackbar open={open} onClose={() => setOpen(false)} autoHideDuration={5000} {...snackbarProps}>
-        <Alert severity='error' sx={contentSx}>
-          Please enter a name of 20 characters or fewer
-        </Alert>
-      </Snackbar>
+      <Toast open={error.open} onClose={() => setError(prev => ({ ...prev, open: false }))} autoHideDuration={5000} severity='error'>
+        {error.message}
+      </Toast>
     </>
   )
 }

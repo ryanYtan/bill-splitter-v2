@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { v4 as uuidv4 } from 'uuid'
-import type { BillData, Item, TaxSetting, User, UserItem } from '../hooks/use-bill'
+import { MAX_ITEMS, MAX_PRICE, MAX_QUANTITY, MAX_TEXT_LENGTH, MAX_USERS } from '../bill/limits'
+import type { BillData, Item, TaxSetting, User, UserItem } from '../bill/types'
 import { INVALID_LINK_MESSAGE, ShareError } from './codec'
 
 /**
@@ -33,12 +34,6 @@ type RawBill = Record<string, unknown>
 const migrations: Record<number, (bill: RawBill) => RawBill> = {}
 
 const NEWER_VERSION_MESSAGE = 'This bill was created with a newer version of Bill Splitter. Try refreshing the page.'
-
-const MAX_USERS = 200
-export const MAX_ITEMS = 500
-export const MAX_TEXT_LENGTH = 200
-const MAX_PRICE = 1e9
-const MAX_QUANTITY = 1e6
 
 export const serializeBill = (data: BillData): string => {
   const userIndexes = new Map(data.users.map((user, index) => [user.id, index]))
@@ -119,7 +114,14 @@ const asString = (value: unknown): string => {
 }
 
 const asAmount = (value: unknown, min: number, max: number): BigNumber => {
-  const amount = new BigNumber(asString(value))
+  const text = asString(value)
+  let amount: BigNumber
+  try {
+    amount = new BigNumber(text)
+  } catch {
+    // bignumber.js throws on text that is not a number
+    throw invalid()
+  }
   if (!amount.isFinite() || amount.lt(min) || amount.gt(max)) {
     throw invalid()
   }

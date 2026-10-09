@@ -1,51 +1,24 @@
 import BigNumber from 'bignumber.js'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
+import { computeBill } from '../bill/calc'
+import type { BillData, Item, NewItem, TaxSetting, User, UserItem } from '../bill/types'
+import { sanitizePercentage } from '../bill/validate'
 
-export type User = {
-  id: string
-  name: string
-}
+export type { BillData, Item, NewItem, TaxSetting, User, UserItem } from '../bill/types'
 
-export type Item = {
-  id: string
-  name: string
-  pricePerUnit: BigNumber
-  quantity: BigNumber
-}
-
-export type UserItem = {
-  userId: string
-  itemId: string
-}
-
-export type TaxSetting = {
-  enable: boolean
-  percentage: BigNumber
-}
-
-export type BillData = {
-  users: User[]
-  items: Item[]
-  payer: string | undefined
-  serviceTax: TaxSetting
-  gstTax: TaxSetting
-  userItems: UserItem[]
-}
+export type TaxKind = 'serviceTax' | 'gstTax'
 
 export type BillMethods = {
   addUser: (name: string) => void
   removeUser: (id: string) => void
-  addItem: (item: Omit<Item, 'id'>) => string
+  addItem: (item: NewItem) => string
   removeItem: (id: string) => void
   setPayer: (id: string | undefined) => void
   addUserItem: (userId: string, itemId: string) => void
   removeUserItem: (userId: string, itemId: string) => void
   itemHasContributor: (userId: string, itemId: string) => boolean
-  setServiceTaxEnabled: (enabled: boolean) => void
-  setGstTaxEnabled: (enabled: boolean) => void
-  setServiceTax: (tax: BigNumber) => void
-  setGstTax: (tax: BigNumber) => void
+  setTax: (kind: TaxKind, patch: Partial<TaxSetting>) => void
   computeSubtotal: () => BigNumber
   computeServiceTax: () => BigNumber
   computeGstTax: () => BigNumber
@@ -66,73 +39,11 @@ const useBill = (
   const [gstTax, setGstTax] = useState<TaxSetting>(initial?.gstTax ?? { enable: true, percentage: new BigNumber(9) })
   const [userItems, setUserItems] = useState<UserItem[]>(initial?.userItems ?? [])
 
-  const computeSubtotal = () => {
-    let subtotal = new BigNumber(0)
-    for (const item of items) {
-      const itemTotal = item.quantity.multipliedBy(item.pricePerUnit)
-      subtotal = subtotal.plus(itemTotal)
-    }
-    return subtotal
-  }
-
-  const computeServiceTax = () => {
-    if (!serviceTax.enable) {
-      return new BigNumber(0)
-    }
-    const subtotal = computeSubtotal()
-    const rate = serviceTax.percentage.dividedBy(100)
-    return subtotal.multipliedBy(rate).decimalPlaces(2, BigNumber.ROUND_UP)
-  }
-
-  const computeGstTax = () => {
-    if (!gstTax.enable) {
-      return new BigNumber(0)
-    }
-    const subtotal = computeSubtotal()
-    const serviceTax = computeServiceTax()
-    const rate = gstTax.percentage.dividedBy(100)
-    return subtotal.plus(serviceTax).multipliedBy(rate).decimalPlaces(2, BigNumber.ROUND_UP)
-  }
-
-  const computeTotal = () => {
-    const subtotal = computeSubtotal()
-    const serviceTax = computeServiceTax()
-    const gstTax = computeGstTax()
-    return subtotal.plus(serviceTax).plus(gstTax).decimalPlaces(2, BigNumber.ROUND_UP)
-  }
-
-  const computeUserShare = (userId: string) => {
-    const uis = userItems.filter(ui => ui.userId === userId)
-    let share = new BigNumber(0)
-    for (const ui of uis) {
-      const item = items.find(i => i.id === ui.itemId)
-      if (!item) {
-        continue
-      }
-      const numOfContributorsForItem = userItems.filter(ui => ui.itemId === item.id)
-      const subtotalOfItem = item.pricePerUnit.multipliedBy(item.quantity)
-      const shareForItem = subtotalOfItem.dividedBy(numOfContributorsForItem.length)
-      share = share.plus(shareForItem)
-    }
-    const subtotal = computeSubtotal()
-    if (subtotal.isZero()) {
-      return new BigNumber(0)
-    }
-    const shareAsProportion = share.dividedBy(subtotal) //a number between 0 and 1
-    const shareOfServiceCharge = shareAsProportion.multipliedBy(computeServiceTax())
-    const shareOfGst = shareAsProportion.multipliedBy(computeGstTax())
-    return share.plus(shareOfServiceCharge).plus(shareOfGst).decimalPlaces(2, BigNumber.ROUND_UP)
-  }
+  const data: BillData = useMemo(() => ({ users, items, payer, serviceTax, gstTax, userItems }), [users, items, payer, serviceTax, gstTax, userItems])
+  const totals = useMemo(() => computeBill(data), [data])
 
   return {
-    data: {
-      users,
-      items,
-      payer,
-      serviceTax,
-      gstTax,
-      userItems,
-    },
+    data,
     methods: {
       addUser: (name: string) => {
         const id = uuidv4()
@@ -141,11 +52,9 @@ const useBill = (
       removeUser: (id: string) => {
         setUsers(prev => prev.filter(u => u.id !== id))
         setUserItems(prev => prev.filter(ui => ui.userId !== id))
-        if (payer === id) {
-          setPayer(undefined)
-        }
+        setPayer(prev => (prev === id ? undefined : prev))
       },
-      addItem: (item: Omit<Item, 'id'>) => {
+      addItem: (item: NewItem) => {
         const id = uuidv4()
         setItems(prev => [...prev, { id, ...item }])
         return id
@@ -169,23 +78,16 @@ const useBill = (
       itemHasContributor: (userId: string, itemId: string) => {
         return userItems.some(ui => ui.userId === userId && ui.itemId === itemId)
       },
-      setServiceTaxEnabled: (enabled: boolean) => {
-        setServiceTax(prev => ({ ...prev, enable: enabled }))
+      setTax: (kind: TaxKind, patch: Partial<TaxSetting>) => {
+        const sanitized = patch.percentage ? { ...patch, percentage: sanitizePercentage(patch.percentage) } : patch
+        const setTax = kind === 'serviceTax' ? setServiceTax : setGstTax
+        setTax(prev => ({ ...prev, ...sanitized }))
       },
-      setGstTaxEnabled: (enabled: boolean) => {
-        setGstTax(prev => ({ ...prev, enable: enabled }))
-      },
-      setServiceTax: (rate: BigNumber) => {
-        setServiceTax(prev => ({ ...prev, percentage: rate }))
-      },
-      setGstTax: (rate: BigNumber) => {
-        setGstTax(prev => ({ ...prev, percentage: rate }))
-      },
-      computeSubtotal,
-      computeServiceTax,
-      computeGstTax,
-      computeTotal,
-      computeUserShare,
+      computeSubtotal: () => totals.subtotal,
+      computeServiceTax: () => totals.serviceCharge,
+      computeGstTax: () => totals.gst,
+      computeTotal: () => totals.total,
+      computeUserShare: (userId: string) => totals.shares.get(userId) ?? new BigNumber(0),
     },
   }
 }

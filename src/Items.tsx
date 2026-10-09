@@ -1,15 +1,16 @@
-import { Box, Button, Dialog, Divider, IconButton, Typography } from '@mui/material'
+import { Button, Divider, IconButton, Typography } from '@mui/material'
 import { BillData, BillMethods } from './hooks/use-bill'
 import { useState } from 'react'
 import Section from './components/Section/Section'
 import ItemForm from './components/ItemForm'
-import { NumericFormat } from 'react-number-format'
 import DeleteIcon from '@mui/icons-material/Delete'
 import UserItemSelector from './UserItemSelector'
 import PersonChip from './components/PersonChip'
 import SectionContainer from './components/Section/SectionContainer'
 import FlexBox from './components/FlexBox'
 import ReceiptScanner from './components/ReceiptScanner'
+import ItemSummary from './components/ItemSummary'
+import SectionDialog from './components/SectionDialog'
 
 const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMethods; readOnly?: boolean }) => {
   const [open, setOpen] = useState(false)
@@ -36,15 +37,7 @@ const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
                   </IconButton>
                 </FlexBox>
               )}
-              <Box sx={{ width: 200 }}>
-                <Typography noWrap sx={{ fontWeight: 'bold' }}>
-                  {item.name}
-                </Typography>
-                <Typography variant='subtitle2'>
-                  <NumericFormat value={item.pricePerUnit.toNumber()} displayType='text' thousandSeparator prefix='$' decimalScale={2} fixedDecimalScale /> EA
-                </Typography>
-                <Typography variant='subtitle2'>QTY: {item.quantity.toNumber()}</Typography>
-              </Box>
+              <ItemSummary item={item} sx={{ width: 200 }} />
               <FlexBox sx={{ flex: 1, gap: 0.5 }}>
                 {data.users
                   .filter(u => methods.itemHasContributor(u.id, item.id))
@@ -69,13 +62,9 @@ const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
         )}
       </SectionContainer>
       {!readOnly && (
-        <Dialog open={open} onClose={onClose} fullWidth maxWidth='xs'>
-          <SectionContainer>
-            <Section sx={{ p: 2 }}>
-              <ItemForm data={data} methods={methods} onSubmit={onClose} />
-            </Section>
-          </SectionContainer>
-        </Dialog>
+        <SectionDialog open={open} onClose={onClose}>
+          <ItemForm data={data} methods={methods} onSubmit={onClose} />
+        </SectionDialog>
       )}
     </>
   )

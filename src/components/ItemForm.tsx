@@ -5,6 +5,8 @@ import { BillData, BillMethods } from '../hooks/use-bill'
 import FlexBox from './FlexBox'
 import Grid from '@mui/material/Grid'
 import BigNumber from 'bignumber.js'
+import { MAX_ENTRY_QUANTITY } from '../bill/limits'
+import { validateNewItem } from '../bill/validate'
 
 interface ItemFormProps {
   data: BillData
@@ -19,23 +21,13 @@ const ItemForm = (props: ItemFormProps) => {
   const [errorMessage, setErrorMessage] = useState('')
 
   const onSubmit = () => {
-    if (!name) {
-      setErrorMessage('Name is required')
+    const item = { name, pricePerUnit: new BigNumber(price ?? NaN), quantity: new BigNumber(quantity) }
+    const error = validateNewItem(item, props.data.items)
+    if (error) {
+      setErrorMessage(error)
       return
     }
-    if (!price) {
-      setErrorMessage('Price is required')
-      return
-    }
-    if (quantity < 1) {
-      setErrorMessage('Quantity must be at least 1')
-      return
-    }
-    if (props.data.items.some(item => item.name === name)) {
-      setErrorMessage('Item already exists')
-      return
-    }
-    props.methods.addItem({ name, pricePerUnit: new BigNumber(price), quantity: new BigNumber(quantity) })
+    props.methods.addItem(item)
     setErrorMessage('')
     setName('')
     setPrice(undefined)
@@ -86,7 +78,7 @@ const ItemForm = (props: ItemFormProps) => {
           <Box sx={{ px: 1 }}>
             <Grid container columnSpacing={2}>
               <Grid size={10}>
-                <Slider min={1} max={30} step={1} shiftStep={10} marks valueLabelDisplay='auto' value={quantity} onChange={(_, value) => setQuantity(value as number)} />
+                <Slider min={1} max={MAX_ENTRY_QUANTITY} step={1} shiftStep={10} marks valueLabelDisplay='auto' value={quantity} onChange={(_, value) => setQuantity(value as number)} />
               </Grid>
               <Grid size='grow'>
                 <TextField
@@ -101,7 +93,7 @@ const ItemForm = (props: ItemFormProps) => {
                         type: 'number',
                         step: 1,
                         min: 1,
-                        max: 30,
+                        max: MAX_ENTRY_QUANTITY,
                       },
                     },
                   }}

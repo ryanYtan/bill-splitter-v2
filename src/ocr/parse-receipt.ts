@@ -1,9 +1,8 @@
 import BigNumber from 'bignumber.js'
-import { Item } from '../hooks/use-bill'
+import { MAX_ENTRY_QUANTITY } from '../bill/limits'
+import type { NewItem } from '../bill/types'
 
-export type ParsedItem = Omit<Item, 'id'>
-
-const MAX_QUANTITY = 30
+export type ParsedItem = NewItem
 
 // Lines that are part of a receipt but are not purchasable items.
 const NON_ITEM = /\b(sub\s*-?\s*total|total|gst|tax|svc|service|charge|change|cash|visa|master(card)?|nets|amex|amount|rounding|balance|tender|receipt|invoice|table|date|time|thank|server|cashier|qty|payment|discount)\b/i
@@ -52,7 +51,7 @@ export const parseReceiptText = (text: string): ParsedItem[] => {
     // Receipt prices are line totals. Only split into per-unit when it divides exactly to cents,
     // otherwise keep quantity 1 at the line total so the bill total stays correct.
     let pricePerUnit = lineTotal
-    if (quantity > 1 && quantity <= MAX_QUANTITY) {
+    if (quantity > 1 && quantity <= MAX_ENTRY_QUANTITY) {
       const each = lineTotal.dividedBy(quantity)
       if (each.decimalPlaces()! <= 2 && each.isGreaterThan(0)) {
         pricePerUnit = each
@@ -67,7 +66,7 @@ export const parseReceiptText = (text: string): ParsedItem[] => {
     const existing = merged.get(key)
     if (existing) {
       const total = existing.quantity.plus(quantity)
-      if (total.isLessThanOrEqualTo(MAX_QUANTITY)) {
+      if (total.isLessThanOrEqualTo(MAX_ENTRY_QUANTITY)) {
         existing.quantity = total
         continue
       }

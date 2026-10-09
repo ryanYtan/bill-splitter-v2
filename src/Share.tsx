@@ -1,4 +1,4 @@
-import { Alert, Button, IconButton, InputAdornment, Snackbar, Stack, TextField, Typography } from '@mui/material'
+import { AlertColor, Button, IconButton, InputAdornment, Stack, TextField, Typography } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import IosShareIcon from '@mui/icons-material/IosShare'
 import TelegramIcon from '@mui/icons-material/Telegram'
@@ -6,7 +6,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import FlexBox from './components/FlexBox'
 import { useEffect, useState } from 'react'
 import { BillData } from './hooks/use-bill'
-import { useToastPlacement } from './hooks/use-toast-placement'
+import Toast from './components/Toast'
 import Section from './components/Section/Section'
 import SectionContainer from './components/Section/SectionContainer'
 import { compressToBase64Url } from './share/codec'
@@ -24,10 +24,10 @@ const SHARE_TEXT = 'Here is our bill:'
 
 const Share = ({ data }: { data: BillData }) => {
   const [link, setLink] = useState('')
-  const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' }>()
-  const { snackbarProps, contentSx } = useToastPlacement()
+  // The message is kept while the toast fades out, so only `open` is cleared on close
+  const [toast, setToast] = useState<{ open: boolean; message: string; severity: AlertColor }>({ open: false, message: '', severity: 'success' })
 
-  // `data` is a new object on every render, so key the effect on the serialized bill instead
+  // Key the effect on the serialized bill, so changes that do not affect the link do not regenerate it
   const json = serializeBill(data)
 
   useEffect(() => {
@@ -45,9 +45,9 @@ const Share = ({ data }: { data: BillData }) => {
   const copy = async (successMessage = 'Link copied to clipboard') => {
     try {
       await navigator.clipboard.writeText(link)
-      setSnackbar({ message: successMessage, severity: 'success' })
+      setToast({ open: true, message: successMessage, severity: 'success' })
     } catch {
-      setSnackbar({ message: 'Could not copy automatically. Please copy the link manually.', severity: 'error' })
+      setToast({ open: true, message: 'Could not copy automatically. Please copy the link manually.', severity: 'error' })
     }
   }
 
@@ -109,11 +109,9 @@ const Share = ({ data }: { data: BillData }) => {
           </FlexBox>
         </Stack>
       </Section>
-      <Snackbar open={!!snackbar} onClose={() => setSnackbar(undefined)} autoHideDuration={3000} {...snackbarProps}>
-        <Alert severity={snackbar?.severity} sx={contentSx}>
-          {snackbar?.message}
-        </Alert>
-      </Snackbar>
+      <Toast open={toast.open} onClose={() => setToast(prev => ({ ...prev, open: false }))} autoHideDuration={3000} severity={toast.severity}>
+        {toast.message}
+      </Toast>
     </SectionContainer>
   )
 }

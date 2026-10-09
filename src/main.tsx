@@ -35,14 +35,13 @@ const theme = createTheme({
   },
 })
 
-const PROG = 'bill-splitter-v2'
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <BrowserRouter>
+      {/* Vite's `base` (see vite.config.ts) is the single source of the path the app is served under */}
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Routes>
-          <Route path={PROG} element={<App />} />
+          <Route path='/' element={<App />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

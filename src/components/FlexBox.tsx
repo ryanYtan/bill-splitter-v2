@@ -1,19 +1,17 @@
-import React from 'react'
 import { Box, BoxProps } from '@mui/material'
 
-const FlexBox = (props: BoxProps & { children?: React.ReactNode }) => {
+const FlexBox = ({ sx, ...rest }: BoxProps) => {
   return (
     <Box
+      {...rest}
       sx={{
         display: 'flex',
         alignItems: 'center',
         gap: 1,
         flexWrap: 'wrap',
-        ...props.sx,
+        ...sx,
       }}
-    >
-      {props.children}
-    </Box>
+    />
   )
 }
 

@@ -3,6 +3,8 @@ import SectionContainer from './components/Section/SectionContainer'
 import Section from './components/Section/Section'
 import { Box, Stack, Typography } from '@mui/material'
 import FlexBox from './components/FlexBox'
+import { formatMoney } from './bill/money'
+import { getTotalRows } from './components/total-rows'
 
 interface ReportProps {
   data: BillData
@@ -19,13 +21,6 @@ const Report = (props: ReportProps) => {
   if (!paidByName) {
     return null
   }
-
-  const totals = [
-    ['SUBTOTAL:', methods.computeSubtotal()],
-    ['SERVICE CHARGE:', methods.computeServiceTax()],
-    ['GST:', methods.computeGstTax()],
-    ['TOTAL:', methods.computeTotal()],
-  ] as const
 
   return (
     <SectionContainer>
@@ -52,22 +47,22 @@ const Report = (props: ReportProps) => {
             {data.users.map(user =>
               data.payer === user.id ? (
                 <Typography key={user.id}>
-                  <strong>{user.name}</strong> paid for everyone. (<strong>{user.name}</strong>'s share is ${methods.computeUserShare(user.id).toFixed(2)})
+                  <strong>{user.name}</strong> paid for everyone. (<strong>{user.name}</strong>'s share is {formatMoney(methods.computeUserShare(user.id))})
                 </Typography>
               ) : (
                 <Typography key={user.id}>
-                  <strong>{user.name}</strong> owes <strong>{paidByName}</strong> ${methods.computeUserShare(user.id).toFixed(2)}
+                  <strong>{user.name}</strong> owes <strong>{paidByName}</strong> {formatMoney(methods.computeUserShare(user.id))}
                 </Typography>
               )
             )}
           </Box>
           <Box>
-            {totals.map(([label, amount]) => (
+            {getTotalRows(data, methods).map(({ label, amount }) => (
               <FlexBox key={label}>
                 <Box sx={{ width: 120 }}>
                   <Typography sx={{ fontWeight: 'bold' }}>{label}</Typography>
                 </Box>
-                <Typography>${amount.toFixed(2)}</Typography>
+                <Typography>{formatMoney(amount)}</Typography>
               </FlexBox>
             ))}
           </Box>
