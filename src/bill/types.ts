@@ -30,5 +30,7 @@ export type BillData = {
   payer: string | undefined
   serviceTax: TaxSetting
   gstTax: TaxSetting
+  // Fixed amount taken off the subtotal before service charge and GST; zero means no discount
+  discount: BigNumber
   userItems: UserItem[]
 }

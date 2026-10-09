@@ -13,6 +13,7 @@ const bill = (overrides: Partial<BillData> = {}): BillData => ({
   payer: undefined,
   serviceTax: tax(10),
   gstTax: tax(9),
+  discount: new BigNumber(0),
   userItems: [
     { userId: 'u1', itemId: 'a' },
     { userId: 'u2', itemId: 'a' },
@@ -55,6 +56,28 @@ describe('computeBill', () => {
     expect(fixed(shares.get('u1'))).toBe('19.19') // 16 + 16/21 of (2.10 + 2.08), rounded up
     expect(fixed(shares.get('u2'))).toBe('6.00') // 5 + 5/21 of (2.10 + 2.08), rounded up
     expect(fixed(shares.get('u3'))).toBe('0.00')
+  })
+
+  it('takes the discount off the subtotal before service charge and GST', () => {
+    const totals = computeBill(bill({ discount: new BigNumber(1) }))
+    expect(fixed(totals.subtotal)).toBe('21.00')
+    expect(fixed(totals.discount)).toBe('1.00')
+    expect(fixed(totals.serviceCharge)).toBe('2.00')
+    expect(fixed(totals.gst)).toBe('1.98')
+    expect(fixed(totals.total)).toBe('23.98')
+  })
+
+  it('allocates the discount in proportion to each share of the subtotal', () => {
+    const { shares } = computeBill(bill({ discount: new BigNumber(1) }))
+    expect(fixed(shares.get('u1'))).toBe('18.28') // 16 + 16/21 of (2.00 + 1.98 - 1.00), rounded up
+    expect(fixed(shares.get('u2'))).toBe('5.71') // 5 + 5/21 of (2.00 + 1.98 - 1.00), rounded up
+  })
+
+  it('caps the discount at the subtotal', () => {
+    const totals = computeBill(bill({ discount: new BigNumber(50) }))
+    expect(fixed(totals.discount)).toBe('21.00')
+    expect(fixed(totals.total)).toBe('0.00')
+    expect(fixed(totals.shares.get('u1'))).toBe('0.00')
   })
 
   it('ignores contributions to items that no longer exist', () => {

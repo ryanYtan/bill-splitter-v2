@@ -3,10 +3,12 @@ import type { BillData, TaxSetting } from './types'
 
 export type BillTotals = {
   subtotal: BigNumber
+  // The discount actually applied, which is never more than the subtotal
+  discount: BigNumber
   serviceCharge: BigNumber
   gst: BigNumber
   total: BigNumber
-  // Each user's share of the total (including their portion of service charge and GST), keyed by user id
+  // Each user's share of the total (including their portion of the discount, service charge and GST), keyed by user id
   shares: Map<string, BigNumber>
 }
 
@@ -17,9 +19,10 @@ const roundUp = (amount: BigNumber) => amount.decimalPlaces(2, BigNumber.ROUND_U
 const applyTax = (tax: TaxSetting, base: BigNumber) => (tax.enable ? roundUp(base.multipliedBy(tax.percentage.dividedBy(100))) : ZERO)
 
 /**
- * Computes every amount shown for a bill. Order: subtotal -> service charge (on subtotal) -> GST (on
- * subtotal + service charge), each taxed amount rounded up to 2 dp. Each item is split equally among
- * its contributors, and service charge and GST are allocated in proportion to a user's share of the
+ * Computes every amount shown for a bill. Order: subtotal -> discount (a fixed amount, capped at the
+ * subtotal) -> service charge (on the discounted subtotal) -> GST (on discounted subtotal + service
+ * charge), each taxed amount rounded up to 2 dp. Each item is split equally among its contributors,
+ * and the discount, service charge and GST are allocated in proportion to a user's share of the
  * subtotal. Shares are rounded up per user, so they may not sum exactly to the total.
  */
 export const computeBill = (data: BillData): BillTotals => {
@@ -29,9 +32,11 @@ export const computeBill = (data: BillData): BillTotals => {
   for (const itemTotal of itemTotals.values()) {
     subtotal = subtotal.plus(itemTotal)
   }
-  const serviceCharge = applyTax(data.serviceTax, subtotal)
-  const gst = applyTax(data.gstTax, subtotal.plus(serviceCharge))
-  const total = roundUp(subtotal.plus(serviceCharge).plus(gst))
+  const discount = BigNumber.max(ZERO, BigNumber.min(data.discount, subtotal))
+  const discounted = subtotal.minus(discount)
+  const serviceCharge = applyTax(data.serviceTax, discounted)
+  const gst = applyTax(data.gstTax, discounted.plus(serviceCharge))
+  const total = roundUp(discounted.plus(serviceCharge).plus(gst))
 
   const contributorCounts = new Map<string, number>()
   for (const ui of data.userItems) {
@@ -54,9 +59,9 @@ export const computeBill = (data: BillData): BillTotals => {
       shares.set(user.id, ZERO)
       continue
     }
-    const proportion = share.dividedBy(subtotal) // a number between 0 and 1
-    shares.set(user.id, roundUp(share.plus(proportion.multipliedBy(serviceCharge)).plus(proportion.multipliedBy(gst))))
+    // Multiply before dividing: a fully discounted bill must come to exactly zero, not a sliver that rounds up to a cent
+    shares.set(user.id, roundUp(share.multipliedBy(discounted.plus(serviceCharge).plus(gst)).dividedBy(subtotal)))
   }
 
-  return { subtotal, serviceCharge, gst, total, shares }
+  return { subtotal, discount, serviceCharge, gst, total, shares }
 }

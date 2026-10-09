@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { describe, expect, it } from 'vitest'
-import { MAX_ENTRY_QUANTITY, MAX_ITEMS, MAX_TEXT_LENGTH, MAX_USER_NAME_LENGTH, MAX_USERS } from './limits'
-import { parsePercentage, sanitizePercentage, validateItemFields, validateNewItem, validateUserName } from './validate'
+import { MAX_ENTRY_QUANTITY, MAX_ITEMS, MAX_PRICE, MAX_TEXT_LENGTH, MAX_USER_NAME_LENGTH, MAX_USERS } from './limits'
+import { parseDiscount, parsePercentage, sanitizeDiscount, sanitizePercentage, validateItemFields, validateNewItem, validateUserName } from './validate'
 
 const newItem = (overrides: { name?: string; price?: number | string; quantity?: number } = {}) => ({
   name: overrides.name ?? 'Chicken Rice',
@@ -86,5 +86,23 @@ describe('parsePercentage', () => {
   it('treats a cleared or unparseable field as 0', () => {
     expect(parsePercentage('').toFixed()).toBe('0')
     expect(parsePercentage('.').toFixed()).toBe('0')
+  })
+})
+
+describe('sanitizeDiscount', () => {
+  it('treats NaN as 0 and clamps to 0-MAX_PRICE', () => {
+    expect(sanitizeDiscount(new BigNumber('2.5')).toFixed()).toBe('2.5')
+    expect(sanitizeDiscount(new BigNumber(NaN)).toFixed()).toBe('0')
+    expect(sanitizeDiscount(new BigNumber(-5)).toFixed()).toBe('0')
+    expect(sanitizeDiscount(new BigNumber(MAX_PRICE).plus(1)).toFixed()).toBe(`${MAX_PRICE}`)
+  })
+})
+
+describe('parseDiscount', () => {
+  it('parses what the user typed, treating a cleared or unparseable field as 0', () => {
+    expect(parseDiscount('2.5').toFixed()).toBe('2.5')
+    expect(parseDiscount('5.').toFixed()).toBe('5')
+    expect(parseDiscount('').toFixed()).toBe('0')
+    expect(parseDiscount('.').toFixed()).toBe('0')
   })
 })

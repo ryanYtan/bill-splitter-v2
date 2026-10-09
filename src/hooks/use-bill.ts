@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { computeBill } from '../bill/calc'
 import type { BillData, Item, NewItem, TaxSetting, User, UserItem } from '../bill/types'
-import { sanitizePercentage } from '../bill/validate'
+import { sanitizeDiscount, sanitizePercentage } from '../bill/validate'
 
 export type { BillData, Item, NewItem, TaxSetting, User, UserItem } from '../bill/types'
 
@@ -19,7 +19,9 @@ export type BillMethods = {
   removeUserItem: (userId: string, itemId: string) => void
   itemHasContributor: (userId: string, itemId: string) => boolean
   setTax: (kind: TaxKind, patch: Partial<TaxSetting>) => void
+  setDiscount: (amount: BigNumber) => void
   computeSubtotal: () => BigNumber
+  computeDiscount: () => BigNumber
   computeServiceTax: () => BigNumber
   computeGstTax: () => BigNumber
   computeTotal: () => BigNumber
@@ -37,9 +39,10 @@ const useBill = (
   const [payer, setPayer] = useState<string | undefined>(initial?.payer)
   const [serviceTax, setServiceTax] = useState<TaxSetting>(initial?.serviceTax ?? { enable: true, percentage: new BigNumber(10) })
   const [gstTax, setGstTax] = useState<TaxSetting>(initial?.gstTax ?? { enable: true, percentage: new BigNumber(9) })
+  const [discount, setDiscount] = useState<BigNumber>(initial?.discount ?? new BigNumber(0))
   const [userItems, setUserItems] = useState<UserItem[]>(initial?.userItems ?? [])
 
-  const data: BillData = useMemo(() => ({ users, items, payer, serviceTax, gstTax, userItems }), [users, items, payer, serviceTax, gstTax, userItems])
+  const data: BillData = useMemo(() => ({ users, items, payer, serviceTax, gstTax, discount, userItems }), [users, items, payer, serviceTax, gstTax, discount, userItems])
   const totals = useMemo(() => computeBill(data), [data])
 
   return {
@@ -83,7 +86,9 @@ const useBill = (
         const setTax = kind === 'serviceTax' ? setServiceTax : setGstTax
         setTax(prev => ({ ...prev, ...sanitized }))
       },
+      setDiscount: (amount: BigNumber) => setDiscount(sanitizeDiscount(amount)),
       computeSubtotal: () => totals.subtotal,
+      computeDiscount: () => totals.discount,
       computeServiceTax: () => totals.serviceCharge,
       computeGstTax: () => totals.gst,
       computeTotal: () => totals.total,

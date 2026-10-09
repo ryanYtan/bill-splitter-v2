@@ -64,10 +64,27 @@ export const sanitizePercentage = (percentage: BigNumber): BigNumber => {
   return BigNumber.max(0, BigNumber.min(100, percentage))
 }
 
+/** Coerces a discount into the 0-MAX_PRICE range; an empty or unparseable input counts as 0. */
+export const sanitizeDiscount = (discount: BigNumber): BigNumber => {
+  if (!discount.isFinite()) {
+    return new BigNumber(0)
+  }
+  return BigNumber.max(0, BigNumber.min(MAX_PRICE, discount))
+}
+
 /** Parses a tax percentage as typed by the user. bignumber.js throws on text that is not a number (such as a cleared field). */
 export const parsePercentage = (text: string): BigNumber => {
   try {
     return sanitizePercentage(new BigNumber(text))
+  } catch {
+    return new BigNumber(0)
+  }
+}
+
+/** Parses a discount amount as typed by the user, with the same handling of a cleared field as parsePercentage. */
+export const parseDiscount = (text: string): BigNumber => {
+  try {
+    return sanitizeDiscount(new BigNumber(text))
   } catch {
     return new BigNumber(0)
   }

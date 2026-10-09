@@ -8,4 +8,8 @@ describe('formatMoney', () => {
     expect(formatMoney(new BigNumber('4.5'))).toBe('$4.50')
     expect(formatMoney(new BigNumber('1234567.891'))).toBe('$1,234,567.89')
   })
+
+  it('puts the minus sign of a negative amount before the dollar sign', () => {
+    expect(formatMoney(new BigNumber('-5'))).toBe('-$5.00')
+  })
 })

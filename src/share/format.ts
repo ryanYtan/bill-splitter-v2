@@ -13,7 +13,7 @@ import { INVALID_LINK_MESSAGE, ShareError } from './codec'
  *  2. add `migrations[<old version>]` that upgrades an old bill to the next version,
  *  3. update serializeBill and toBillData to the new shape.
  */
-export const CURRENT_VERSION = 1
+export const CURRENT_VERSION = 2
 
 type SharedTaxV1 = { enable: boolean; percentage: string }
 
@@ -28,17 +28,22 @@ type SharedBillV1 = {
   gstTax: SharedTaxV1
 }
 
+// Version 2 added `discount`: a fixed amount (decimal string) taken off the subtotal, '0' for none
+type SharedBillV2 = Omit<SharedBillV1, 'v'> & { v: 2; discount: string }
+
 type RawBill = Record<string, unknown>
 
-// migrations[n] upgrades a version n bill to version n + 1. No migrations exist yet.
-const migrations: Record<number, (bill: RawBill) => RawBill> = {}
+// migrations[n] upgrades a version n bill to version n + 1
+const migrations: Record<number, (bill: RawBill) => RawBill> = {
+  1: bill => ({ ...bill, discount: '0' }),
+}
 
 const NEWER_VERSION_MESSAGE = 'This bill was created with a newer version of Bill Splitter. Try refreshing the page.'
 
 export const serializeBill = (data: BillData): string => {
   const userIndexes = new Map(data.users.map((user, index) => [user.id, index]))
-  const bill: SharedBillV1 = {
-    v: 1,
+  const bill: SharedBillV2 = {
+    v: 2,
     users: data.users.map(user => user.name),
     items: data.items.map(item => ({
       name: item.name,
@@ -53,6 +58,7 @@ export const serializeBill = (data: BillData): string => {
     payer: (data.payer === undefined ? undefined : userIndexes.get(data.payer)) ?? null,
     serviceTax: serializeTax(data.serviceTax),
     gstTax: serializeTax(data.gstTax),
+    discount: data.discount.toFixed(),
   }
   return JSON.stringify(bill)
 }
@@ -157,5 +163,5 @@ const toBillData = (bill: RawBill): BillData => {
     }
   }
   const payer = bill.payer === null ? undefined : users[asIndex(bill.payer, users.length)].id
-  return { users, items, payer, serviceTax: asTax(bill.serviceTax), gstTax: asTax(bill.gstTax), userItems }
+  return { users, items, payer, serviceTax: asTax(bill.serviceTax), gstTax: asTax(bill.gstTax), discount: asAmount(bill.discount, 0, MAX_PRICE), userItems }
 }

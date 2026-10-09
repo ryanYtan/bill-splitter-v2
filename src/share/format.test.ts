@@ -17,6 +17,7 @@ const sample: BillData = {
   payer: 'u2',
   serviceTax: { enable: true, percentage: new BigNumber(10) },
   gstTax: { enable: false, percentage: new BigNumber(9) },
+  discount: new BigNumber('2.50'),
   userItems: [
     { userId: 'u2', itemId: 'i1' },
     { userId: 'u1', itemId: 'i1' },
@@ -36,9 +37,9 @@ const v1 = (overrides: Record<string, unknown> = {}) =>
   })
 
 describe('serializeBill', () => {
-  it('writes the version 1 shape, referencing users by index', () => {
+  it('writes the version 2 shape, referencing users by index', () => {
     expect(JSON.parse(serializeBill(sample))).toEqual({
-      v: 1,
+      v: 2,
       users: ['Ann', 'Ben'],
       items: [
         { name: 'Chicken Rice', price: '4.5', quantity: '2', users: [0, 1] },
@@ -47,6 +48,7 @@ describe('serializeBill', () => {
       payer: 1,
       serviceTax: { enable: true, percentage: '10' },
       gstTax: { enable: false, percentage: '9' },
+      discount: '2.5',
     })
   })
 })
@@ -58,12 +60,17 @@ describe('parseBill', () => {
     expect(parsed.users[0].id).not.toBe('u1')
     expect(parsed.payer).toBe(parsed.users[1].id)
     expect(parsed.gstTax.enable).toBe(false)
+    expect(parsed.discount.toFixed()).toBe('2.5')
     // Serializing again drops the ids, so equal output means the same bill
     expect(serializeBill(parsed)).toBe(serializeBill(sample))
   })
 
   it('accepts a bill with nobody chosen as payer', () => {
     expect(parseBill(v1({ payer: null })).payer).toBeUndefined()
+  })
+
+  it('opens a version 1 link, which has no discount', () => {
+    expect(parseBill(v1()).discount.toFixed()).toBe('0')
   })
 
   it('asks the user to refresh for a newer version', () => {
@@ -79,6 +86,8 @@ describe('parseBill', () => {
     ['an overlong name', v1({ users: ['a'.repeat(MAX_TEXT_LENGTH + 1)] })],
     ['a non-numeric price', v1({ items: [{ name: 'Kopi', price: 'abc', quantity: '1', users: [] }] })],
     ['a negative price', v1({ items: [{ name: 'Kopi', price: '-1', quantity: '1', users: [] }] })],
+    ['a negative discount', v1({ v: 2, discount: '-1' })],
+    ['a version 2 bill without a discount', v1({ v: 2 })],
     ['a tax above 100%', v1({ gstTax: { enable: true, percentage: '101' } })],
     ['too many items', v1({ items: Array.from({ length: MAX_ITEMS + 1 }, () => ({ name: 'Kopi', price: '1', quantity: '1', users: [] })) })],
   ])('rejects %s', (_, json) => {
