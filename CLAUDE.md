@@ -14,13 +14,24 @@ Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 en
 
 ## Architecture
 
-Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to `https://anmitsu.dev/a/billsplit` by `.github/workflows/deploy.yml` on push to `master`. There is no backend or persistence; all state is in memory.
+Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to `https://anmitsu.dev/a/billsplit` by `.github/workflows/deploy.yml` on push to `master`. All bill state is in memory. The only backend is the optional short-link store (see Short links); the app works without it.
 
-The path the app is served under is set once, as `base` in `vite.config.ts`; `src/main.tsx` passes `import.meta.env.BASE_URL` (minus the trailing slash) to the router as `basename`. Sharing uses a query string (`?share=`), not extra routes, so the host needs no SPA fallback.
+The path the app is served under is set once, as `base` in `vite.config.ts`; `src/main.tsx` passes `import.meta.env.BASE_URL` (minus the trailing slash) to the router as `basename`. Sharing uses a query string (`?share=` or `?s=`), not extra routes, so the host needs no SPA fallback.
 
 ### Hosting
 
 The build is static files in the S3 bucket `anmitsu-dev-frontend` under `a/billsplit/`, served by the CloudFront distribution for `anmitsu.dev` (set up by hand, not IaC). That distribution's default behaviour is another app behind basic auth; the `/a/billsplit*` behaviour is public and uses the `append-index-html` CloudFront Function (shared with another distribution) to map `/a/billsplit` and `/a/billsplit/` to `index.html`. The workflow reads the role ARN and distribution ID from the repository variables `AWS_ROLE_ARN` and `CLOUDFRONT_DISTRIBUTION_ID`, and assumes the IAM role `github-bill-splitter-deploy` through GitHub OIDC (trusted only for this repo's `master` branch; it can write under that S3 prefix and create invalidations, nothing else), uploads hashed assets as immutable and `index.html` as `no-cache`, then invalidates `/a/billsplit*`. Moving the app to another path means changing `base`, the workflow's `S3_URI` and invalidation path, the role's policy, and the CloudFront behaviour together.
+
+### Short links: `lambda/links/`, `src/share/short-link.ts`
+
+A short link is `<page URL>?s=<id>`: the id points at a share token (exactly what a `?share=` link carries) kept server-side for 30 days. Everything is in `ap-southeast-1`, set up by hand like the rest of the hosting:
+
+- Lambda `billsplit-links` (`lambda/links/index.mjs`, Node.js 22, no dependencies beyond the runtime's AWS SDK, reserved concurrency 5 to bound abuse). `POST …/api/links` with the token as the body returns `{ id }`; `GET …/api/links/<id>` returns `{ token }` or 404. The id is the first 10 base64url characters of the token's SHA-256, so re-sharing the same bill returns the same link and renews its 30 days.
+- DynamoDB table `billsplit-links` (on-demand, key `id`, TTL on `expiresAt`). The function's role `billsplit-links-lambda` can only get/put items in it and write its own logs.
+- CloudFront behaviour `/a/billsplit/api/*` (ahead of `/a/billsplit*`, caching disabled, all methods) forwards to the function URL, which requires IAM auth and only accepts this distribution (origin access control). Because CloudFront signs the request, a `POST` must carry the body's SHA-256 in `x-amz-content-sha256`; `createShortLink` does that.
+- The deploy workflow does **not** deploy the Lambda. After changing `lambda/links/index.mjs`, zip it and update the function code by hand.
+
+`vite.config.ts` proxies `/a/billsplit/api` to the deployed site, so `yarn dev` uses the real store.
 
 ### State: `src/hooks/use-bill.ts`
 
@@ -41,11 +52,12 @@ Key modelling details:
 
 ### Sharing: `src/share/`, `src/Share.tsx`, `src/hooks/use-shared-bill.ts`
 
-A bill is shared as `<page URL>?share=<token>`; opening such a link renders the bill read-only (`readOnly` prop on `Users`, `Items`, `Taxes`, `WhoPaid`; `App` shows a banner and a "New bill" button that clears the param).
+A bill is shared as `<page URL>?s=<id>` (short link, see above) or `<page URL>?share=<token>` (the whole bill in the link; still produced as the fallback when the short-link store can't be used, and old ones must keep opening). Opening either renders the bill read-only (`readOnly` prop on `Users`, `Items`, `Taxes`, `WhoPaid`; `App` shows a banner and a "New bill" button that clears the param).
 
 - `share/format.ts` defines the **versioned** serialized shape (`v` field, `CURRENT_VERSION`), `serializeBill` (BillData → JSON, users referenced by index, BigNumbers as strings, ids dropped) and `parseBill` (untrusted JSON → validated BillData with fresh uuids). Old links must keep working: to change the format, bump `CURRENT_VERSION`, add `migrations[oldVersion]`, and update `serializeBill`/`toBillData`. Never change the meaning of an existing version. Version 2 added `discount`; `migrations[1]` fills it in as `'0'` for version 1 links.
 - `share/codec.ts` is deflate-raw (`CompressionStream`, no dependency) + unpadded URL-safe base64. Decoding accepts standard base64 too and caps decompressed size at 1 MB. Both directions are async.
 - Everything decoded from a link is untrusted: validate in `format.ts` and throw `ShareError` (its message is shown to the user).
+- `Share.tsx` only creates a link when "Create link" is pressed, because a short link stores the bill on the server; editing the bill discards the link. `use-shared-bill.ts` resolves `?s=` to a token with `fetchShareToken` and then treats it like any other untrusted token.
 - `Share.tsx` also offers WhatsApp and Telegram buttons (plain `wa.me` / `t.me/share/url` links) and a "Share" button that calls `navigator.share` only when the browser supports it (the native sheet lists every installed app). Adding another target is just another link built from `link`.
 - `useBill(initial?)` accepts the decoded bill as initial state; `App` decodes before mounting `Bill`, since hook state can only be seeded on first render.
 

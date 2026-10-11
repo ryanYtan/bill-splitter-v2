@@ -28,7 +28,7 @@ const Bill = ({ initial, readOnly }: { initial?: BillData; readOnly?: boolean })
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const shared = useSharedBill(searchParams.get('share'))
+  const shared = useSharedBill(searchParams.get('share'), searchParams.get('s'))
 
   const newBillButton = (
     <Button color='inherit' size='small' onClick={() => setSearchParams({})}>

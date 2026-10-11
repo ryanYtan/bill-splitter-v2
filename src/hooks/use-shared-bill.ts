@@ -2,37 +2,45 @@ import { useEffect, useState } from 'react'
 import type { BillData } from './use-bill'
 import { decompressFromBase64Url, INVALID_LINK_MESSAGE, ShareError } from '../share/codec'
 import { parseBill } from '../share/format'
+import { fetchShareToken } from '../share/short-link'
 
 export type SharedBillState = { status: 'none' } | { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; data: BillData }
 
 type Outcome = { status: 'error'; message: string } | { status: 'ready'; data: BillData }
 
-/** Decodes the bill in a `?share=` token. Pass null when the page was not opened from a share link. */
-const useSharedBill = (token: string | null): SharedBillState => {
-  const [result, setResult] = useState<{ token: string; outcome: Outcome }>()
+/**
+ * Decodes the bill a share link points to: either the `?share=` token itself, or the `?s=` short id the
+ * token is stored under on the server. Pass null for both when the page was not opened from a share link.
+ */
+const useSharedBill = (token: string | null, shortId: string | null): SharedBillState => {
+  const [result, setResult] = useState<{ key: string; outcome: Outcome }>()
+  // A link carrying the whole bill needs no network, so it wins if both are present
+  const key = token !== null ? `share:${token}` : shortId !== null ? `s:${shortId}` : null
 
   useEffect(() => {
-    if (token === null) {
+    if (key === null) {
       return
     }
     let cancelled = false
-    decompressFromBase64Url(token)
+    const loadToken = token !== null ? Promise.resolve(token) : fetchShareToken(shortId!)
+    loadToken
+      .then(decompressFromBase64Url)
       .then((json): Outcome => ({ status: 'ready', data: parseBill(json) }))
       .catch((e): Outcome => ({ status: 'error', message: e instanceof ShareError ? e.message : INVALID_LINK_MESSAGE }))
       .then(outcome => {
         if (!cancelled) {
-          setResult({ token, outcome })
+          setResult({ key, outcome })
         }
       })
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [key, token, shortId])
 
-  if (token === null) {
+  if (key === null) {
     return { status: 'none' }
   }
-  return result?.token === token ? result.outcome : { status: 'loading' }
+  return result?.key === key ? result.outcome : { status: 'loading' }
 }
 
 export default useSharedBill
