@@ -6,6 +6,9 @@ import { fetchShareToken } from '../share/short-link'
 
 export type SharedBillState = { status: 'none' } | { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; data: BillData }
 
+// A shared bill is shown no sooner than this, so the loading skeleton does not just flash by
+const MIN_LOAD_MS = 1000
+
 type Outcome = { status: 'error'; message: string } | { status: 'ready'; data: BillData }
 
 /**
@@ -23,10 +26,14 @@ const useSharedBill = (token: string | null, shortId: string | null): SharedBill
     }
     let cancelled = false
     const loadToken = token !== null ? Promise.resolve(token) : fetchShareToken(shortId!)
-    loadToken
+    const load = loadToken
       .then(decompressFromBase64Url)
       .then((json): Outcome => ({ status: 'ready', data: parseBill(json) }))
       .catch((e): Outcome => ({ status: 'error', message: e instanceof ShareError ? e.message : INVALID_LINK_MESSAGE }))
+    // The delay runs alongside the load rather than after it, so a slow request is not made slower
+    const minimumWait = new Promise<void>(resolve => setTimeout(resolve, MIN_LOAD_MS))
+    Promise.all([load, minimumWait])
+      .then(([outcome]) => outcome)
       .then(outcome => {
         if (!cancelled) {
           setResult({ key, outcome })

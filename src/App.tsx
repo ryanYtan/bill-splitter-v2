@@ -1,4 +1,4 @@
-import { Alert, Button, CircularProgress, Container, Stack, Typography } from '@mui/material'
+import { Alert, Button, Container, Stack, Typography } from '@mui/material'
 import { useSearchParams } from 'react-router'
 import Users from './Users'
 import useBill, { BillData } from './hooks/use-bill'
@@ -9,6 +9,7 @@ import PriceSummary from './PriceSummary'
 import WhoPaid from './WhoPaid'
 import Report from './Report'
 import Share from './Share'
+import BillSkeleton from './components/BillSkeleton'
 
 const Bill = ({ initial, readOnly }: { initial?: BillData; readOnly?: boolean }) => {
   const { data, methods } = useBill(initial)
@@ -41,11 +42,7 @@ function App() {
       <Stack spacing={1}>
         <Typography variant='h1'>Bill Splitter</Typography>
         {shared.status === 'none' && <Bill />}
-        {shared.status === 'loading' && (
-          <Stack sx={{ alignItems: 'center', py: 4 }}>
-            <CircularProgress />
-          </Stack>
-        )}
+        {shared.status === 'loading' && <BillSkeleton />}
         {shared.status === 'error' && (
           <Alert severity='error' action={newBillButton}>
             {shared.message}
