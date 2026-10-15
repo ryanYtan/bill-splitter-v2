@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 enforces it via `engines`; CI uses Node 24).
 
-- `yarn dev` — Vite dev server. The app is served under the base path `/a/billsplit/`, so open `http://localhost:5173/a/billsplit/`.
+- `yarn dev` — Vite dev server. The app is served under the base path `/tools/bill-splitter/`, so open `http://localhost:5173/tools/bill-splitter/`.
 - `yarn build` — `tsc -b && vite build` (type-check is part of the build; `strict`, `noUnusedLocals`, `noUnusedParameters` are on).
 - `yarn test` — Vitest, single run (`yarn vitest` to watch, `yarn vitest run src/bill/calc.test.ts` for one file). Tests sit next to the code as `*.test.ts`, run in the default Node environment (no DOM), and cover the pure modules only. CI runs them before the build, so a failing test blocks the deploy.
 - `yarn lint` — ESLint (flat config, typescript-eslint recommended + react-hooks + react-refresh).
@@ -14,24 +14,24 @@ Package manager is **yarn** (v1). Node >= 22.22 is required (`react-router` 8 en
 
 ## Architecture
 
-Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to `https://anmitsu.dev/a/billsplit` by `.github/workflows/deploy.yml` on push to `master`. All bill state is in memory. The only backend is the optional short-link store (see Short links); the app works without it.
+Client-side-only React 19 + TypeScript + MUI app (SG-style bill splitter with service charge and GST), deployed to `https://anmitsu.dev/tools/bill-splitter` by `.github/workflows/deploy.yml` on push to `master`. All bill state is in memory. The only backend is the optional short-link store (see Short links); the app works without it.
 
 The path the app is served under is set once, as `base` in `vite.config.ts`; `src/main.tsx` passes `import.meta.env.BASE_URL` (minus the trailing slash) to the router as `basename`. Sharing uses a query string (`?share=` or `?s=`), not extra routes, so the host needs no SPA fallback.
 
 ### Hosting
 
-The build is static files in the S3 bucket `anmitsu-dev-frontend` under `a/billsplit/`, served by the CloudFront distribution for `anmitsu.dev` (set up by hand, not IaC). That distribution's default behaviour is another app behind basic auth; the `/a/billsplit*` behaviour is public and uses the `append-index-html` CloudFront Function (shared with another distribution) to map `/a/billsplit` and `/a/billsplit/` to `index.html`. The workflow reads the role ARN and distribution ID from the repository variables `AWS_ROLE_ARN` and `CLOUDFRONT_DISTRIBUTION_ID`, and assumes the IAM role `github-bill-splitter-deploy` through GitHub OIDC (trusted only for this repo's `master` branch; it can write under that S3 prefix and create invalidations, nothing else), uploads hashed assets as immutable and `index.html` as `no-cache`, then invalidates `/a/billsplit*`. Moving the app to another path means changing `base`, the workflow's `S3_URI` and invalidation path, the role's policy, and the CloudFront behaviour together.
+The build is static files in the S3 bucket `anmitsu-dev-frontend` under `tools/bill-splitter/`, served by the CloudFront distribution for `anmitsu.dev`. That distribution, its `/tools/bill-splitter*` behaviour (public, using the `append-index-html` CloudFront Function to map `/tools/bill-splitter` and `/tools/bill-splitter/` to `index.html`) and the deploy role are Terraform in the `anmitsu.dev` repo (`infra/apps.tf`, entry `billsplit`). The app's old path `/a/billsplit*` answers with a 301 to the same page under `/tools/bill-splitter`, keeping the query string, so old `?s=` and `?share=` links keep opening (`local.moved` there). The workflow reads the role ARN and distribution ID from the repository variables `AWS_ROLE_ARN` and `CLOUDFRONT_DISTRIBUTION_ID`, and assumes the IAM role `github-bill-splitter-deploy` through GitHub OIDC (trusted only for this repo's `master` branch; it can write under that S3 prefix and create invalidations, nothing else), uploads hashed assets as immutable and `index.html` as `no-cache`, then invalidates `/tools/bill-splitter*`. Moving the app to another path means changing `base` and the workflow's `S3_URI` and invalidation path here, and the app's `path` in `infra/apps.tf` (plus a `local.moved` entry for the old path) there; apply the Terraform before deploying, since the role can only write under the new path.
 
 ### Short links: `lambda/links/`, `src/share/short-link.ts`
 
-A short link is `<page URL>?s=<id>`: the id points at a share token (exactly what a `?share=` link carries) kept server-side for 30 days. Everything is in `ap-southeast-1`, set up by hand like the rest of the hosting:
+A short link is `<page URL>?s=<id>`: the id points at a share token (exactly what a `?share=` link carries) kept server-side for 30 days. Everything is in `ap-southeast-1` and set up by hand, apart from the CloudFront side (in the `anmitsu.dev` Terraform):
 
 - Lambda `billsplit-links` (`lambda/links/index.mjs`, Node.js 22, no dependencies beyond the runtime's AWS SDK, reserved concurrency 5 to bound abuse). `POST …/api/links` with the token as the body returns `{ id }`; `GET …/api/links/<id>` returns `{ token }` or 404. The id is the first 10 base64url characters of the token's SHA-256, so re-sharing the same bill returns the same link and renews its 30 days.
 - DynamoDB table `billsplit-links` (on-demand, key `id`, TTL on `expiresAt`). The function's role `billsplit-links-lambda` can only get/put items in it and write its own logs.
-- CloudFront behaviour `/a/billsplit/api/*` (ahead of `/a/billsplit*`, caching disabled, all methods) forwards to the function URL, which requires IAM auth and only accepts this distribution (origin access control). Because CloudFront signs the request, a `POST` must carry the body's SHA-256 in `x-amz-content-sha256`; `createShortLink` does that.
+- CloudFront behaviour `/tools/bill-splitter/api/*` (ahead of `/tools/bill-splitter*`, caching disabled, all methods) forwards to the function URL, which requires IAM auth and only accepts this distribution (origin access control). Because CloudFront signs the request, a `POST` must carry the body's SHA-256 in `x-amz-content-sha256`; `createShortLink` does that.
 - The deploy workflow does **not** deploy the Lambda. After changing `lambda/links/index.mjs`, zip it and update the function code by hand.
 
-`vite.config.ts` proxies `/a/billsplit/api` to the deployed site, so `yarn dev` uses the real store.
+`vite.config.ts` proxies `/tools/bill-splitter/api` to the deployed site, so `yarn dev` uses the real store.
 
 ### State: `src/hooks/use-bill.ts`
 

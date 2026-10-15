@@ -1,6 +1,6 @@
 // Short share links for Bill Splitter: stores a share token (the same compressed text a `?share=` link
 // carries) under a short id for 30 days. Runs as a Lambda function URL behind the CloudFront behaviour
-// `/a/billsplit/api/*`; deployed by hand (see CLAUDE.md). The AWS SDK comes with the Node.js runtime.
+// `/tools/bill-splitter/api/*`; deployed by hand (see CLAUDE.md). The AWS SDK comes with the Node.js runtime.
 import { createHash } from 'node:crypto'
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb'
 
