@@ -2,9 +2,8 @@ import { Alert, Button, Chip, Stack, Typography } from '@mui/material'
 import { BillData, BillMethods, Item, User } from './hooks/use-bill'
 import { useState } from 'react'
 import AddIcon from '@mui/icons-material/Add'
-import CheckIcon from '@mui/icons-material/Check'
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined'
-import PersonChip from './components/PersonChip'
+import PeoplePicker from './components/PeoplePicker'
 import ItemSummary from './components/ItemSummary'
 import SectionDialog from './components/SectionDialog'
 
@@ -24,6 +23,16 @@ const UserItemSelector = (props: UserItemSelectorProps) => {
       props.methods.removeUserItem(user.id, props.item.id)
     } else {
       props.methods.addUserItem(user.id, props.item.id)
+    }
+  }
+
+  const chooseEveryone = (choose: boolean) => {
+    for (const user of props.data.users) {
+      if (choose) {
+        props.methods.addUserItem(user.id, props.item.id)
+      } else {
+        props.methods.removeUserItem(user.id, props.item.id)
+      }
     }
   }
 
@@ -51,12 +60,7 @@ const UserItemSelector = (props: UserItemSelectorProps) => {
               <Typography variant='body2' color='textSecondary'>
                 Pick everyone who shared it. Its cost is split evenly between them.
               </Typography>
-              <Stack direction='row' useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-                {props.data.users.map(user => {
-                  const chosen = props.methods.itemHasContributor(user.id, props.item.id)
-                  return <PersonChip key={user.id} color={chosen ? 'primary' : 'default'} variant={chosen ? 'filled' : 'outlined'} icon={chosen ? <CheckIcon /> : undefined} aria-pressed={chosen} user={user} onClick={() => togglePersonToItem(user)} />
-                })}
-              </Stack>
+              <PeoplePicker users={props.data.users} isChosen={user => props.methods.itemHasContributor(user.id, props.item.id)} onToggle={togglePersonToItem} onToggleEveryone={chooseEveryone} />
             </>
           )}
         </Stack>
