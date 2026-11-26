@@ -1,4 +1,5 @@
-import { Chip, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material'
+import { IconButton, InputAdornment, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Panel, Section } from '@anmitsu/ui'
 import { BillData, BillMethods } from './hooks/use-bill'
 import { useState } from 'react'
 import Toast from './components/Toast'
@@ -6,9 +7,6 @@ import { validateUserName } from './bill/validate'
 import ShuffleIcon from '@mui/icons-material/Shuffle'
 import { randomNames } from './constants/constants'
 import PersonChip from './components/PersonChip'
-import FlexBox from './components/FlexBox'
-import SectionContainer from './components/Section/SectionContainer'
-import Section from './components/Section/Section'
 
 const Users = ({ data, methods, readOnly }: { data: BillData; methods: BillMethods; readOnly?: boolean }) => {
   if (readOnly && data.users.length === 0) {
@@ -16,37 +14,20 @@ const Users = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
   }
 
   return (
-    <SectionContainer>
-      <Section sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <FlexBox sx={{ gap: 0.5 }}>
-            {data.users.length === 0 ? (
-              <>
-                <Chip
-                  size='small'
-                  label='Use the input below to add names'
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                  }}
-                />
-                <Chip
-                  size='small'
-                  label='(or click the icon on the right for random names)'
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                  }}
-                />
-              </>
-            ) : (
-              data.users.map(user => <PersonChip key={user.id} user={user} onDelete={readOnly ? undefined : () => methods.removeUser(user.id)} />)
-            )}
-          </FlexBox>
+    <Section title='People' description={readOnly ? undefined : 'Everyone sharing the bill.'}>
+      <Panel>
+        <Stack spacing={data.users.length > 0 && !readOnly ? 2 : 0}>
+          {data.users.length > 0 && (
+            <Stack direction='row' useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+              {data.users.map(user => (
+                <PersonChip key={user.id} user={user} onDelete={readOnly ? undefined : () => methods.removeUser(user.id)} />
+              ))}
+            </Stack>
+          )}
           {!readOnly && <UserInput data={data} methods={methods} />}
         </Stack>
-      </Section>
-    </SectionContainer>
+      </Panel>
+    </Section>
   )
 }
 
@@ -95,9 +76,8 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
         }}
       >
         <TextField
-          fullWidth
-          size='small'
-          placeholder='Enter names (RETURN to add name)'
+          label='Add a person'
+          placeholder='Type a name and press Enter'
           value={value}
           onChange={e => setValue(e.target.value)}
           slotProps={{
@@ -105,9 +85,9 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
             input: {
               endAdornment: (
                 <InputAdornment position='end'>
-                  <Tooltip title='Add random name'>
-                    <IconButton size='small' onClick={() => addRandomUser()}>
-                      <ShuffleIcon />
+                  <Tooltip title='Add a random name'>
+                    <IconButton size='small' edge='end' aria-label='Add a random name' onClick={() => addRandomUser()}>
+                      <ShuffleIcon fontSize='small' />
                     </IconButton>
                   </Tooltip>
                 </InputAdornment>
@@ -115,6 +95,11 @@ const UserInput = (props: { data: BillData; methods: BillMethods }) => {
             },
           }}
         />
+        {props.data.users.length === 0 && (
+          <Typography variant='caption' color='textSecondary' component='p' sx={{ mt: 0.75 }}>
+            No names handy? The shuffle button picks one for you.
+          </Typography>
+        )}
       </form>
       <Toast open={error.open} onClose={() => setError(prev => ({ ...prev, open: false }))} autoHideDuration={5000} severity='error'>
         {error.message}

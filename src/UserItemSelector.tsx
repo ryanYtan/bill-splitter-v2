@@ -1,16 +1,18 @@
-import { Alert, Chip, Stack, Typography } from '@mui/material'
+import { Alert, Button, Chip, Stack, Typography } from '@mui/material'
 import { BillData, BillMethods, Item, User } from './hooks/use-bill'
 import { useState } from 'react'
 import AddIcon from '@mui/icons-material/Add'
+import CheckIcon from '@mui/icons-material/Check'
 import PersonChip from './components/PersonChip'
 import ItemSummary from './components/ItemSummary'
 import SectionDialog from './components/SectionDialog'
-import FlexBox from './components/FlexBox'
 
 interface UserItemSelectorProps {
   data: BillData
   methods: BillMethods
   item: Item
+  /** Nobody has been picked for the item yet, so it isn't in anyone's share. */
+  empty: boolean
 }
 
 const UserItemSelector = (props: UserItemSelectorProps) => {
@@ -24,24 +26,38 @@ const UserItemSelector = (props: UserItemSelectorProps) => {
     }
   }
 
+  const close = () => setOpen(false)
+
   return (
     <>
-      <Chip size='small' label='Add Contributor' icon={<AddIcon />} onClick={() => setOpen(true)} />
-      <SectionDialog open={open} onClose={() => setOpen(false)}>
+      <Chip label={props.empty ? 'Who had this?' : 'Edit'} icon={<AddIcon />} variant='outlined' color={props.empty ? 'warning' : 'default'} onClick={() => setOpen(true)} />
+      <SectionDialog
+        open={open}
+        onClose={close}
+        title='Who had this?'
+        actions={
+          <Button variant='contained' onClick={close}>
+            Done
+          </Button>
+        }
+      >
         <Stack spacing={2}>
           <ItemSummary item={props.item} />
           {props.data.users.length === 0 ? (
-            <Alert severity='info'>
-              <Typography>No contributors found. Add a person above to start adding contributors to this item.</Typography>
-            </Alert>
+            <Alert severity='info'>Add the people sharing the bill first, under People.</Alert>
           ) : (
-            <Typography>Select the users who contributed to this item below. Cost is split evenly among all contributors.</Typography>
+            <>
+              <Typography variant='body2' color='textSecondary'>
+                Pick everyone who shared it. Its cost is split evenly between them.
+              </Typography>
+              <Stack direction='row' useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+                {props.data.users.map(user => {
+                  const chosen = props.methods.itemHasContributor(user.id, props.item.id)
+                  return <PersonChip key={user.id} color={chosen ? 'primary' : 'default'} variant={chosen ? 'filled' : 'outlined'} icon={chosen ? <CheckIcon /> : undefined} aria-pressed={chosen} user={user} onClick={() => togglePersonToItem(user)} />
+                })}
+              </Stack>
+            </>
           )}
-          <FlexBox sx={{ gap: 0.5 }}>
-            {props.data.users.map(user => (
-              <PersonChip key={user.id} variant='filled' color={props.methods.itemHasContributor(user.id, props.item.id) ? 'primary' : 'default'} user={user} onClick={() => togglePersonToItem(user)} />
-            ))}
-          </FlexBox>
         </Stack>
       </SectionDialog>
     </>

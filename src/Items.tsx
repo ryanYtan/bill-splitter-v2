@@ -1,72 +1,63 @@
-import { Button, Divider, IconButton, Typography } from '@mui/material'
+import { IconButton, Stack, Tooltip, Typography } from '@mui/material'
+import { AddButton, Empty, Panel, Rows, Section } from '@anmitsu/ui'
 import { BillData, BillMethods } from './hooks/use-bill'
 import { useState } from 'react'
-import Section from './components/Section/Section'
 import ItemForm from './components/ItemForm'
-import DeleteIcon from '@mui/icons-material/Delete'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import UserItemSelector from './UserItemSelector'
 import PersonChip from './components/PersonChip'
-import SectionContainer from './components/Section/SectionContainer'
-import FlexBox from './components/FlexBox'
 import ReceiptScanner from './components/ReceiptScanner'
 import ItemSummary from './components/ItemSummary'
-import SectionDialog from './components/SectionDialog'
+import { formatMoney } from './bill/money'
 
 const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMethods; readOnly?: boolean }) => {
   const [open, setOpen] = useState(false)
 
-  const onClose = () => {
-    setOpen(false)
-  }
+  const actions = !readOnly && (
+    <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+      <ReceiptScanner data={data} methods={methods} />
+      <AddButton onClick={() => setOpen(true)}>Add item</AddButton>
+    </Stack>
+  )
 
   return (
-    <>
-      <SectionContainer>
-        {data.items.length === 0 && (
-          <Section sx={{ p: 2 }}>
-            <Typography sx={{ fontWeight: 'bold', textAlign: 'center' }}>{readOnly ? 'This bill has no items' : 'Click ADD ITEM below to add items to this bill'}</Typography>
-          </Section>
+    <Section title='Items' action={actions}>
+      <Panel flush>
+        {data.items.length === 0 ? (
+          <Empty>{readOnly ? 'This bill has no items.' : 'No items yet. Add them one at a time, or scan the receipt.'}</Empty>
+        ) : (
+          <Rows>
+            {data.items.map(item => {
+              const contributors = data.users.filter(u => methods.itemHasContributor(u.id, item.id))
+              return (
+                <Stack key={item.id} spacing={1} sx={{ px: 2, py: 1.5 }}>
+                  <Stack direction='row' spacing={1} sx={{ alignItems: 'flex-start' }}>
+                    <ItemSummary item={item} sx={{ flexGrow: 1 }} />
+                    <Typography sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{formatMoney(item.pricePerUnit.times(item.quantity))}</Typography>
+                    {!readOnly && (
+                      <Tooltip title='Remove item'>
+                        <IconButton size='small' aria-label={`Remove ${item.name}`} onClick={() => methods.removeItem(item.id)} sx={{ mt: -0.25, mr: -0.75 }}>
+                          <DeleteOutlinedIcon fontSize='small' />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Stack>
+                  {(contributors.length > 0 || !readOnly) && (
+                    <Stack direction='row' useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+                      {contributors.map(user => (
+                        <PersonChip key={user.id} color='primary' user={user} onDelete={readOnly ? undefined : () => methods.removeUserItem(user.id, item.id)} />
+                      ))}
+                      {!readOnly && <UserItemSelector data={data} methods={methods} item={item} empty={contributors.length === 0} />}
+                    </Stack>
+                  )}
+                </Stack>
+              )
+            })}
+          </Rows>
         )}
-        {data.items.map(item => (
-          <Section key={item.id} sx={{ p: 2 }}>
-            <FlexBox>
-              {!readOnly && (
-                <FlexBox sx={{ width: 50 }}>
-                  <IconButton onClick={() => methods.removeItem(item.id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </FlexBox>
-              )}
-              <ItemSummary item={item} sx={{ width: 200 }} />
-              <FlexBox sx={{ flex: 1, gap: 0.5 }}>
-                {data.users
-                  .filter(u => methods.itemHasContributor(u.id, item.id))
-                  .map(user => (
-                    <PersonChip key={user.id} variant='filled' color='primary' user={user} onDelete={readOnly ? undefined : () => methods.removeUserItem(user.id, item.id)} />
-                  ))}
-                {!readOnly && <UserItemSelector data={data} methods={methods} item={item} />}
-              </FlexBox>
-            </FlexBox>
-          </Section>
-        ))}
-        {!readOnly && (
-          <Section>
-            <FlexBox sx={{ gap: 0, flexWrap: 'nowrap' }}>
-              <Button fullWidth onClick={() => setOpen(true)} sx={{ borderRadius: theme => `0px 0px 0px ${theme.shape.borderRadius}px` }}>
-                Add Item
-              </Button>
-              <Divider orientation='vertical' flexItem />
-              <ReceiptScanner data={data} methods={methods} />
-            </FlexBox>
-          </Section>
-        )}
-      </SectionContainer>
-      {!readOnly && (
-        <SectionDialog open={open} onClose={onClose}>
-          <ItemForm data={data} methods={methods} onSubmit={onClose} />
-        </SectionDialog>
-      )}
-    </>
+      </Panel>
+      {!readOnly && open && <ItemForm data={data} methods={methods} onClose={() => setOpen(false)} />}
+    </Section>
   )
 }
 

@@ -33,13 +33,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      # No `cache: 'yarn'`: setup-node would ask the runner's global Yarn 1 for its cache folder, which refuses a project
+      # pinned to Yarn 4
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'yarn'
+      # Yarn 4 comes through Corepack, at the version `packageManager` in package.json pins
+      - name: Enable Corepack
+        run: corepack enable
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: 0
       - name: Test
         run: yarn test
       - name: Build

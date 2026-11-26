@@ -1,54 +1,67 @@
-import { Checkbox, InputAdornment, TextField, Typography } from '@mui/material'
+import { Box, InputAdornment, Switch, TextField, Typography } from '@mui/material'
+import { ListRow, Panel, Rows, Section } from '@anmitsu/ui'
 import { BillData, BillMethods, TaxSetting } from './hooks/use-bill'
 import { NumericFormat } from 'react-number-format'
-import FlexBox from './components/FlexBox'
-import SectionContainer from './components/Section/SectionContainer'
-import Section from './components/Section/Section'
 import { parseDiscount, parsePercentage } from './bill/validate'
 import { MAX_PRICE } from './bill/limits'
+import { formatMoney } from './bill/money'
 import BigNumber from 'bignumber.js'
+
+const valueSx = { fontWeight: 500, fontVariantNumeric: 'tabular-nums' } as const
+
+const RowLabel = ({ label, hint }: { label: string; hint?: string }) => (
+  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+    <Typography>{label}</Typography>
+    {hint && (
+      <Typography variant='caption' color='textSecondary' component='div'>
+        {hint}
+      </Typography>
+    )}
+  </Box>
+)
 
 interface TaxRowProps {
   label: string
+  hint: string
   tax: TaxSetting
   readOnly?: boolean
   onChange: (patch: Partial<TaxSetting>) => void
 }
 
 const TaxRow = (props: TaxRowProps) => {
+  const id = `tax-${props.label.replace(/\W+/g, '-').toLowerCase()}`
   return (
-    <Section sx={{ py: 1, px: 2 }}>
-      <FlexBox sx={{ justifyContent: 'space-between' }}>
-        <FlexBox>
-          <Typography sx={{ fontWeight: 'bold' }}>APPLY</Typography>
-          <NumericFormat
-            isAllowed={values => {
-              const { formattedValue, floatValue } = values
-              return formattedValue === '' || (floatValue !== undefined && 0 <= floatValue && floatValue <= 100)
-            }}
-            decimalScale={2}
-            allowLeadingZeros={false}
-            value={props.tax.percentage.toNumber()}
-            onChange={e => props.onChange({ percentage: parsePercentage(e.target.value) })}
-            customInput={TextField}
-            variant='standard'
-            slotProps={{
-              input: {
-                endAdornment: <InputAdornment position='end'>%</InputAdornment>,
-                readOnly: props.readOnly,
-              },
-            }}
-            sx={{
-              width: 50,
-            }}
-          />
-          <Typography sx={{ fontWeight: 'bold' }}>{props.label}</Typography>
-        </FlexBox>
-        <FlexBox sx={{ justifyContent: 'flex-end' }}>
-          <Checkbox checked={props.tax.enable} disabled={props.readOnly} onChange={e => props.onChange({ enable: e.target.checked })} />
-        </FlexBox>
-      </FlexBox>
-    </Section>
+    <ListRow sx={{ py: 1 }}>
+      <Box id={id} sx={{ flexGrow: 1, minWidth: 0, display: 'flex' }}>
+        <RowLabel label={props.label} hint={props.hint} />
+      </Box>
+      {props.readOnly ? (
+        <Typography color={props.tax.enable ? undefined : 'textSecondary'} sx={valueSx}>
+          {props.tax.enable ? `${props.tax.percentage.toFixed()}%` : 'Off'}
+        </Typography>
+      ) : (
+        <NumericFormat
+          isAllowed={values => {
+            const { formattedValue, floatValue } = values
+            return formattedValue === '' || (floatValue !== undefined && 0 <= floatValue && floatValue <= 100)
+          }}
+          decimalScale={2}
+          allowNegative={false}
+          allowLeadingZeros={false}
+          value={props.tax.percentage.toNumber()}
+          onChange={e => props.onChange({ percentage: parsePercentage(e.target.value) })}
+          customInput={TextField}
+          disabled={!props.tax.enable}
+          fullWidth={false}
+          slotProps={{
+            input: { endAdornment: <InputAdornment position='end'>%</InputAdornment> },
+            htmlInput: { inputMode: 'decimal', 'aria-label': `${props.label} percentage`, style: { textAlign: 'right' } },
+          }}
+          sx={{ width: 88, flexShrink: 0 }}
+        />
+      )}
+      {!props.readOnly && <Switch checked={props.tax.enable} onChange={e => props.onChange({ enable: e.target.checked })} slotProps={{ input: { 'aria-labelledby': id } }} sx={{ mx: 0 }} />}
+    </ListRow>
   )
 }
 
@@ -60,9 +73,11 @@ interface DiscountRowProps {
 
 const DiscountRow = (props: DiscountRowProps) => {
   return (
-    <Section sx={{ py: 1, px: 2 }}>
-      <FlexBox>
-        <Typography sx={{ fontWeight: 'bold' }}>APPLY</Typography>
+    <ListRow sx={{ py: 1 }}>
+      <RowLabel label='Discount' hint='Taken off before service charge and GST' />
+      {props.readOnly ? (
+        <Typography sx={valueSx}>{formatMoney(props.discount)}</Typography>
+      ) : (
         <NumericFormat
           isAllowed={values => {
             const { formattedValue, floatValue } = values
@@ -74,21 +89,15 @@ const DiscountRow = (props: DiscountRowProps) => {
           value={props.discount.toNumber()}
           onChange={e => props.onChange(parseDiscount(e.target.value))}
           customInput={TextField}
-          variant='standard'
+          fullWidth={false}
           slotProps={{
-            input: {
-              startAdornment: <InputAdornment position='start'>$</InputAdornment>,
-              readOnly: props.readOnly,
-            },
-            htmlInput: { inputMode: 'decimal', 'aria-label': 'Discount amount' },
+            input: { startAdornment: <InputAdornment position='start'>$</InputAdornment> },
+            htmlInput: { inputMode: 'decimal', 'aria-label': 'Discount amount', style: { textAlign: 'right' } },
           }}
-          sx={{
-            width: 90,
-          }}
+          sx={{ width: 112, flexShrink: 0 }}
         />
-        <Typography sx={{ fontWeight: 'bold' }}>DISCOUNT</Typography>
-      </FlexBox>
-    </Section>
+      )}
+    </ListRow>
   )
 }
 
@@ -100,11 +109,15 @@ interface TaxesProps {
 
 const Taxes = ({ data, methods, readOnly }: TaxesProps) => {
   return (
-    <SectionContainer>
-      <DiscountRow discount={data.discount} readOnly={readOnly} onChange={methods.setDiscount} />
-      <TaxRow label='SERVICE CHARGE' tax={data.serviceTax} readOnly={readOnly} onChange={patch => methods.setTax('serviceTax', patch)} />
-      <TaxRow label='GST' tax={data.gstTax} readOnly={readOnly} onChange={patch => methods.setTax('gstTax', patch)} />
-    </SectionContainer>
+    <Section title='Discount and taxes'>
+      <Panel flush>
+        <Rows>
+          {(!readOnly || data.discount.isGreaterThan(0)) && <DiscountRow discount={data.discount} readOnly={readOnly} onChange={methods.setDiscount} />}
+          <TaxRow label='Service charge' hint='On the subtotal' tax={data.serviceTax} readOnly={readOnly} onChange={patch => methods.setTax('serviceTax', patch)} />
+          <TaxRow label='GST' hint='On the subtotal plus service charge' tax={data.gstTax} readOnly={readOnly} onChange={patch => methods.setTax('gstTax', patch)} />
+        </Rows>
+      </Panel>
+    </Section>
   )
 }
 

@@ -1,13 +1,13 @@
 import { ChipProps, Chip } from '@mui/material'
 import { User } from '../hooks/use-bill'
-import FaceIcon from '@mui/icons-material/Face'
 
 interface PersonChipProps {
   user: User
 }
 
-const PersonChip = (props: PersonChipProps & ChipProps) => {
-  return <Chip size='small' icon={<FaceIcon />} label={props.user.name} variant='outlined' {...props} />
+/** A person's name as a tag. `color='primary'` marks them as chosen (eating an item, the payer). */
+const PersonChip = ({ user, ...rest }: PersonChipProps & ChipProps) => {
+  return <Chip label={user.name} {...rest} />
 }
 
 export default PersonChip

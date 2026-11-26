@@ -1,5 +1,7 @@
-import { Alert, Button, Container, Stack, Typography } from '@mui/material'
-import { useSearchParams } from 'react-router'
+import { Alert, Button } from '@mui/material'
+import { AppHeader, Page, PageHeader } from '@anmitsu/ui'
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
+import { Link, useSearchParams } from 'react-router'
 import Users from './Users'
 import useBill, { BillData } from './hooks/use-bill'
 import useSharedBill from './hooks/use-shared-bill'
@@ -30,6 +32,7 @@ const Bill = ({ initial, readOnly }: { initial?: BillData; readOnly?: boolean })
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
   const shared = useSharedBill(searchParams.get('share'), searchParams.get('s'))
+  const isShared = shared.status !== 'none'
 
   const newBillButton = (
     <Button color='inherit' size='small' onClick={() => setSearchParams({})}>
@@ -38,9 +41,11 @@ function App() {
   )
 
   return (
-    <Container maxWidth='sm'>
-      <Stack spacing={1}>
-        <Typography variant='h1'>Bill Splitter</Typography>
+    <>
+      {/* The name links to the page without its query string, which also leaves a shared bill */}
+      <AppHeader icon={<ReceiptLongIcon />} name='Bill Splitter' linkComponent={Link} homeTo='/' maxWidth='sm' />
+      <Page maxWidth='sm'>
+        <PageHeader title={isShared ? 'Shared bill' : 'Split a bill'}>{isShared ? undefined : 'Add who’s sharing and what everyone had. Service charge and GST are shared out for you.'}</PageHeader>
         {shared.status === 'none' && <Bill />}
         {shared.status === 'loading' && <BillSkeleton />}
         {shared.status === 'error' && (
@@ -56,8 +61,8 @@ function App() {
             <Bill initial={shared.data} readOnly />
           </>
         )}
-      </Stack>
-    </Container>
+      </Page>
+    </>
   )
 }
 

@@ -1,87 +1,111 @@
 import { Box, Skeleton, Stack } from '@mui/material'
-import FlexBox from './FlexBox'
-import Section from './Section/Section'
-import SectionContainer from './Section/SectionContainer'
+import { ListRow, Panel, Rows, Stats } from '@anmitsu/ui'
 
-const ChipSkeleton = ({ width }: { width: number }) => <Skeleton variant='rounded' width={width} height={24} sx={{ borderRadius: 4 }} />
+const ChipSkeleton = ({ width }: { width: number }) => <Skeleton variant='rectangular' width={width} height={24} />
 
-/** Placeholder shown while a shared bill is loading. It follows the layout of the read-only bill, so the page does not jump when the bill arrives. */
+/** A section's heading, the size of the `Section` heading from @anmitsu/ui. */
+const Heading = ({ width }: { width: number }) => (
+  <Box sx={{ height: 32, mb: 1, display: 'flex', alignItems: 'center' }}>
+    <Skeleton width={width} height={24} />
+  </Box>
+)
+
+/**
+ * Placeholder shown while a shared bill is loading. It follows the layout of the read-only bill (banner, People, Items,
+ * Discount and taxes, Total, Summary), so the page does not jump when the bill arrives.
+ */
 const BillSkeleton = () => {
   return (
-    <Stack spacing={1} role='status' aria-busy='true' aria-label='Loading shared bill'>
+    <Stack spacing={3} role='status' aria-busy='true' aria-label='Loading shared bill'>
       {/* The "viewing a shared bill" banner */}
-      <Skeleton variant='rounded' height={48} />
-      {/* Users */}
-      <SectionContainer>
-        <Section sx={{ p: 2 }}>
-          <FlexBox sx={{ gap: 0.5 }}>
-            {[64, 80, 56].map((width, i) => (
+      <Skeleton variant='rectangular' height={48} />
+      {/* People */}
+      <Box>
+        <Heading width={60} />
+        <Panel>
+          <Stack direction='row' spacing={0.75}>
+            {[56, 48, 64].map((width, i) => (
               <ChipSkeleton key={i} width={width} />
             ))}
-          </FlexBox>
-        </Section>
-      </SectionContainer>
+          </Stack>
+        </Panel>
+      </Box>
       {/* Items */}
-      <SectionContainer>
-        {[140, 100, 120].map((nameWidth, i) => (
-          <Section key={i} sx={{ p: 2 }}>
-            <FlexBox>
-              <Box sx={{ width: 200 }}>
-                <Skeleton width={nameWidth} />
-                <Skeleton width={70} />
-                <Skeleton width={50} />
-              </Box>
-              <FlexBox sx={{ flex: 1, gap: 0.5 }}>
-                <ChipSkeleton width={64} />
-                <ChipSkeleton width={80} />
-              </FlexBox>
-            </FlexBox>
-          </Section>
-        ))}
-      </SectionContainer>
+      <Box>
+        <Heading width={48} />
+        <Panel flush>
+          <Rows>
+            {[140, 100, 120].map((nameWidth, i) => (
+              <Stack key={i} spacing={1} sx={{ px: 2, py: 1.5 }}>
+                <Stack direction='row' sx={{ justifyContent: 'space-between' }}>
+                  <Box>
+                    <Skeleton width={nameWidth} />
+                    <Skeleton width={70} />
+                  </Box>
+                  <Skeleton width={56} />
+                </Stack>
+                <Stack direction='row' spacing={0.75}>
+                  <ChipSkeleton width={56} />
+                  <ChipSkeleton width={48} />
+                </Stack>
+              </Stack>
+            ))}
+          </Rows>
+        </Panel>
+      </Box>
       {/* Discount, service charge and GST */}
-      <SectionContainer>
-        {[160, 220, 130].map((width, i) => (
-          <Section key={i} sx={{ py: 2, px: 2 }}>
-            <Skeleton width={width} />
-          </Section>
-        ))}
-      </SectionContainer>
-      {/* Price breakdown */}
-      <SectionContainer>
-        {[90, 130, 50, 70].map((labelWidth, i) => (
-          <Section key={i} sx={{ px: 2, py: 1 }}>
-            <FlexBox sx={{ justifyContent: 'flex-end' }}>
+      <Box>
+        <Heading width={150} />
+        <Panel flush>
+          <Rows>
+            {[110, 130, 90].map((width, i) => (
+              <ListRow key={i} sx={{ justifyContent: 'space-between' }}>
+                <Skeleton width={width} />
+                <Skeleton width={40} />
+              </ListRow>
+            ))}
+          </Rows>
+        </Panel>
+      </Box>
+      {/* Total */}
+      <Box>
+        <Heading width={44} />
+        <Panel flush sx={{ py: 1 }}>
+          {[70, 130, 70, 50].map((labelWidth, i) => (
+            <Stack key={i} direction='row' sx={{ justifyContent: 'space-between', px: 2, py: 0.75 }}>
               <Skeleton width={labelWidth} />
-              <FlexBox sx={{ justifyContent: 'flex-end', width: 80 }}>
-                <Skeleton width={56} />
-              </FlexBox>
-            </FlexBox>
-          </Section>
-        ))}
-      </SectionContainer>
-      {/* Who paid */}
-      <SectionContainer>
-        <Section sx={{ p: 2 }}>
-          <Stack spacing={1}>
-            <Skeleton width={60} />
-            <FlexBox sx={{ gap: 0.5, justifyContent: 'center' }}>
-              <ChipSkeleton width={64} />
-            </FlexBox>
-          </Stack>
-        </Section>
-      </SectionContainer>
-      {/* Report */}
-      <SectionContainer>
-        <Section sx={{ p: 2 }}>
-          <Stack spacing={1}>
-            <Skeleton width={110} />
-            <Skeleton width='90%' />
-            <Skeleton width='70%' />
-            <Skeleton width='80%' />
-          </Stack>
-        </Section>
-      </SectionContainer>
+              <Skeleton width={56} />
+            </Stack>
+          ))}
+        </Panel>
+      </Box>
+      {/* Summary */}
+      <Box>
+        <Heading width={80} />
+        <Stack spacing={1.5}>
+          <Stats>
+            {[0, 1].map(i => (
+              <Panel key={i} sx={{ flex: '1 1 0', p: 2 }}>
+                <Skeleton width={50} />
+                <Skeleton width={90} height={32} />
+              </Panel>
+            ))}
+          </Stats>
+          <Panel flush>
+            <Rows>
+              {[60, 50, 70].map((width, i) => (
+                <ListRow key={i} sx={{ justifyContent: 'space-between' }}>
+                  <Box>
+                    <Skeleton width={width} />
+                    <Skeleton width={80} />
+                  </Box>
+                  <Skeleton width={56} />
+                </ListRow>
+              ))}
+            </Rows>
+          </Panel>
+        </Stack>
+      </Box>
     </Stack>
   )
 }

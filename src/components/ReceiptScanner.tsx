@@ -1,4 +1,5 @@
-import { Alert, Box, Button, LinearProgress, Typography } from '@mui/material'
+import { Alert, Button, LinearProgress, Stack, Typography } from '@mui/material'
+import DocumentScannerOutlinedIcon from '@mui/icons-material/DocumentScannerOutlined'
 import { useRef, useState } from 'react'
 import { BillData, BillMethods } from '../hooks/use-bill'
 import { parseReceiptText } from '../ocr/parse-receipt'
@@ -65,31 +66,30 @@ const ReceiptScanner = ({ data, methods }: { data: BillData; methods: BillMethod
           if (file) void scan(file)
         }}
       />
-      <Button fullWidth onClick={() => inputRef.current?.click()} disabled={status.kind === 'scanning'} sx={{ borderRadius: theme => `0px 0px ${theme.shape.borderRadius}px 0px` }}>
-        Scan Receipt
+      <Button size='small' startIcon={<DocumentScannerOutlinedIcon />} onClick={() => inputRef.current?.click()} disabled={status.kind === 'scanning'}>
+        Scan receipt
       </Button>
-      <SectionDialog open={status.kind !== 'idle'} onClose={status.kind === 'error' ? () => setStatus({ kind: 'idle' }) : undefined}>
+      <SectionDialog
+        open={status.kind !== 'idle'}
+        title={status.kind === 'error' ? 'Couldn’t scan the receipt' : 'Scanning receipt'}
+        onClose={status.kind === 'error' ? () => setStatus({ kind: 'idle' }) : undefined}
+        actions={
+          status.kind === 'error' && (
+            <Button variant='outlined' onClick={() => setStatus({ kind: 'idle' })}>
+              Close
+            </Button>
+          )
+        }
+      >
         {status.kind === 'scanning' && (
-          <Box>
-            <Typography variant='h3' sx={{ mb: 1 }}>
-              Scanning receipt
-            </Typography>
-            <Typography variant='subtitle2' sx={{ mb: 1 }}>
+          <Stack spacing={1}>
+            <Typography variant='body2' color='textSecondary' sx={{ '&::first-letter': { textTransform: 'uppercase' } }}>
               {status.label}
             </Typography>
             <LinearProgress variant={status.progress > 0 ? 'determinate' : 'indeterminate'} value={status.progress * 100} />
-          </Box>
+          </Stack>
         )}
-        {status.kind === 'error' && (
-          <Box>
-            <Alert severity='error' sx={{ mb: 2 }}>
-              {status.message}
-            </Alert>
-            <Button fullWidth onClick={() => setStatus({ kind: 'idle' })}>
-              Close
-            </Button>
-          </Box>
-        )}
+        {status.kind === 'error' && <Alert severity='error'>{status.message}</Alert>}
       </SectionDialog>
       <Toast
         open={added.length > 0}

@@ -13,10 +13,10 @@ export const getTotalRows = (data: BillData, methods: BillMethods): TotalRow[] =
   const hasDiscount = discount.isGreaterThan(0)
   const base = hasDiscount ? 'subtotal after the discount' : 'subtotal'
   return [
-    { label: 'SUBTOTAL:', tooltip: 'Computed as the total of all items before any discount or taxes', amount: methods.computeSubtotal() },
-    ...(hasDiscount ? [{ label: 'DISCOUNT:', tooltip: 'Taken off the subtotal before service charge and GST', amount: discount.negated() }] : []),
-    ...(data.serviceTax.enable ? [{ label: 'SERVICE CHARGE:', tooltip: `Computed as ${data.serviceTax.percentage}% of the ${base}`, amount: methods.computeServiceTax() }] : []),
-    ...(data.gstTax.enable ? [{ label: 'GST:', tooltip: `Computed as ${data.gstTax.percentage}% of the sum of the ${base} and service charge`, amount: methods.computeGstTax() }] : []),
-    { label: 'TOTAL:', tooltip: `Computed as the sum of the ${base}, service charge, and GST`, amount: methods.computeTotal() },
+    { label: 'Subtotal', tooltip: 'Computed as the total of all items before any discount or taxes', amount: methods.computeSubtotal() },
+    ...(hasDiscount ? [{ label: 'Discount', tooltip: 'Taken off the subtotal before service charge and GST', amount: discount.negated() }] : []),
+    ...(data.serviceTax.enable ? [{ label: `Service charge (${data.serviceTax.percentage}%)`, tooltip: `Computed as ${data.serviceTax.percentage}% of the ${base}`, amount: methods.computeServiceTax() }] : []),
+    ...(data.gstTax.enable ? [{ label: `GST (${data.gstTax.percentage}%)`, tooltip: `Computed as ${data.gstTax.percentage}% of the sum of the ${base} and service charge`, amount: methods.computeGstTax() }] : []),
+    { label: 'Total', tooltip: `Computed as the sum of the ${base}, service charge, and GST`, amount: methods.computeTotal() },
   ]
 }

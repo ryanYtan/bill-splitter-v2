@@ -1,14 +1,13 @@
-import { AlertColor, Button, IconButton, InputAdornment, Stack, TextField, Typography } from '@mui/material'
+import { AlertColor, Button, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material'
+import { Panel, Section } from '@anmitsu/ui'
+import LinkIcon from '@mui/icons-material/Link'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import IosShareIcon from '@mui/icons-material/IosShare'
 import TelegramIcon from '@mui/icons-material/Telegram'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
-import FlexBox from './components/FlexBox'
 import { useEffect, useState } from 'react'
 import { BillData } from './hooks/use-bill'
 import Toast from './components/Toast'
-import Section from './components/Section/Section'
-import SectionContainer from './components/Section/SectionContainer'
 import { compressToBase64Url } from './share/codec'
 import { serializeBill } from './share/format'
 import { createShortLink } from './share/short-link'
@@ -96,59 +95,54 @@ const Share = ({ data }: { data: BillData }) => {
   const telegramHref = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(SHARE_TEXT)}`
 
   return (
-    <SectionContainer>
-      <Section sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <Typography sx={{ fontWeight: 'bold' }}>Share this bill</Typography>
-          <Typography variant='subtitle2'>Anyone with the link can view (but not edit) the bill as it is right now.{current?.short && ' The link works for 30 days.'}</Typography>
-          {!current && (
-            <FlexBox>
-              <Button size='small' variant='contained' disabled={!currentToken} loading={creating} onClick={createLink}>
-                Create link
-              </Button>
-            </FlexBox>
-          )}
-          {current && (
-            <>
-              <TextField
-                fullWidth
-                size='small'
-                value={link}
-                onFocus={e => e.target.select()}
-                slotProps={{
-                  input: {
-                    readOnly: true,
-                    endAdornment: (
-                      <InputAdornment position='end'>
-                        <IconButton size='small' aria-label='Copy link' disabled={!link} onClick={() => copy()}>
-                          <ContentCopyIcon />
+    <Section title='Share' description={`Anyone with the link can view (but not edit) the bill as it is now.${current?.short ? ' The link works for 30 days.' : ''}`}>
+      <Panel>
+        {!current && (
+          <Button variant='contained' startIcon={<LinkIcon />} disabled={!currentToken} loading={creating} onClick={createLink}>
+            Create link
+          </Button>
+        )}
+        {current && (
+          <Stack spacing={1.5}>
+            <TextField
+              value={link}
+              onFocus={e => e.target.select()}
+              slotProps={{
+                htmlInput: { 'aria-label': 'Link to this bill' },
+                input: {
+                  readOnly: true,
+                  endAdornment: (
+                    <InputAdornment position='end'>
+                      <Tooltip title='Copy link'>
+                        <IconButton size='small' edge='end' aria-label='Copy link' disabled={!link} onClick={() => copy()}>
+                          <ContentCopyIcon fontSize='small' />
                         </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              <FlexBox>
-                {canNativeShare && (
-                  <Button size='small' variant='outlined' startIcon={<IosShareIcon />} disabled={!link} onClick={nativeShare}>
-                    Share
-                  </Button>
-                )}
-                <Button size='small' variant='outlined' startIcon={<WhatsAppIcon />} disabled={!link} href={whatsAppHref} target='_blank' rel='noopener noreferrer'>
-                  WhatsApp
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <Stack direction='row' useFlexGap sx={{ flexWrap: 'wrap', gap: 1 }}>
+              {canNativeShare && (
+                <Button variant='contained' startIcon={<IosShareIcon />} disabled={!link} onClick={nativeShare}>
+                  Share
                 </Button>
-                <Button size='small' variant='outlined' startIcon={<TelegramIcon />} disabled={!link} href={telegramHref} target='_blank' rel='noopener noreferrer'>
-                  Telegram
-                </Button>
-              </FlexBox>
-            </>
-          )}
-        </Stack>
-      </Section>
+              )}
+              <Button variant='outlined' startIcon={<WhatsAppIcon />} disabled={!link} href={whatsAppHref} target='_blank' rel='noopener noreferrer'>
+                WhatsApp
+              </Button>
+              <Button variant='outlined' startIcon={<TelegramIcon />} disabled={!link} href={telegramHref} target='_blank' rel='noopener noreferrer'>
+                Telegram
+              </Button>
+            </Stack>
+          </Stack>
+        )}
+      </Panel>
       <Toast open={toast.open} onClose={() => setToast(prev => ({ ...prev, open: false }))} autoHideDuration={3000} severity={toast.severity}>
         {toast.message}
       </Toast>
-    </SectionContainer>
+    </Section>
   )
 }
 

@@ -1,25 +1,20 @@
-import { Tooltip, Typography } from '@mui/material'
-import FlexBox from './components/FlexBox'
-import Section from './components/Section/Section'
-import SectionContainer from './components/Section/SectionContainer'
+import { Box, Stack, Tooltip, Typography } from '@mui/material'
+import { Panel, Section } from '@anmitsu/ui'
 import { BillData, BillMethods } from './hooks/use-bill'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { formatMoney } from './bill/money'
 import { getTotalRows, TotalRow } from './components/total-rows'
 
-const PriceRow = (props: TotalRow) => {
+const PriceRow = ({ row, total }: { row: TotalRow; total?: boolean }) => {
   return (
-    <Section sx={{ px: 2, py: 1 }}>
-      <FlexBox sx={{ justifyContent: 'flex-end' }}>
-        <Tooltip title={props.tooltip}>
-          <InfoOutlinedIcon fontSize='small' />
-        </Tooltip>
-        <Typography sx={{ fontWeight: 'bold' }}>{props.label}</Typography>
-        <FlexBox sx={{ justifyContent: 'flex-end', width: 80 }}>
-          <Typography>{formatMoney(props.amount)}</Typography>
-        </FlexBox>
-      </FlexBox>
-    </Section>
+    <Stack direction='row' spacing={1} sx={{ alignItems: 'center', px: 2, py: total ? 1.5 : 0.75, ...(total && { borderTop: 1, borderColor: 'divider', bgcolor: 'primary.tint' }) }}>
+      <Typography sx={{ fontWeight: total ? 600 : undefined, fontSize: total ? 16 : undefined }}>{row.label}</Typography>
+      <Tooltip title={row.tooltip} enterTouchDelay={0}>
+        <InfoOutlinedIcon aria-label={row.tooltip} sx={{ fontSize: 16, color: 'text.secondary' }} />
+      </Tooltip>
+      <Box sx={{ flexGrow: 1 }} />
+      <Typography sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: total ? 600 : undefined, fontSize: total ? 18 : undefined }}>{formatMoney(row.amount)}</Typography>
+    </Stack>
   )
 }
 
@@ -29,12 +24,17 @@ interface PriceSummaryProps {
 }
 
 const PriceSummary = ({ data, methods }: PriceSummaryProps) => {
+  const rows = getTotalRows(data, methods)
   return (
-    <SectionContainer>
-      {getTotalRows(data, methods).map(row => (
-        <PriceRow key={row.label} {...row} />
-      ))}
-    </SectionContainer>
+    <Section title='Total'>
+      <Panel flush>
+        <Box sx={{ pt: 0.75 }}>
+          {rows.map((row, i) => (
+            <PriceRow key={row.label} row={row} total={i === rows.length - 1} />
+          ))}
+        </Box>
+      </Panel>
+    </Section>
   )
 }
 
