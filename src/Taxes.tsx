@@ -1,7 +1,7 @@
-import { Box, InputAdornment, Switch, TextField, Typography } from '@mui/material'
+import { Box, InputAdornment, Switch, Typography } from '@mui/material'
 import { ListRow, Panel, Rows, Section } from '@anmitsu/ui'
 import { BillData, BillMethods, TaxSetting } from './hooks/use-bill'
-import { NumericFormat } from 'react-number-format'
+import DecimalField from './components/DecimalField'
 import { parseDiscount, parsePercentage } from './bill/validate'
 import { MAX_PRICE } from './bill/limits'
 import { formatMoney } from './bill/money'
@@ -40,7 +40,7 @@ const TaxRow = (props: TaxRowProps) => {
           {props.tax.enable ? `${props.tax.percentage.toFixed()}%` : 'Off'}
         </Typography>
       ) : (
-        <NumericFormat
+        <DecimalField
           isAllowed={values => {
             const { formattedValue, floatValue } = values
             return formattedValue === '' || (floatValue !== undefined && 0 <= floatValue && floatValue <= 100)
@@ -48,9 +48,8 @@ const TaxRow = (props: TaxRowProps) => {
           decimalScale={2}
           allowNegative={false}
           allowLeadingZeros={false}
-          value={props.tax.percentage.toNumber()}
-          onChange={e => props.onChange({ percentage: parsePercentage(e.target.value) })}
-          customInput={TextField}
+          value={props.tax.percentage}
+          onChange={text => props.onChange({ percentage: parsePercentage(text) })}
           disabled={!props.tax.enable}
           fullWidth={false}
           slotProps={{
@@ -78,7 +77,7 @@ const DiscountRow = (props: DiscountRowProps) => {
       {props.readOnly ? (
         <Typography sx={valueSx}>{formatMoney(props.discount)}</Typography>
       ) : (
-        <NumericFormat
+        <DecimalField
           isAllowed={values => {
             const { formattedValue, floatValue } = values
             return formattedValue === '' || (floatValue !== undefined && 0 <= floatValue && floatValue <= MAX_PRICE)
@@ -86,9 +85,10 @@ const DiscountRow = (props: DiscountRowProps) => {
           decimalScale={2}
           allowNegative={false}
           allowLeadingZeros={false}
-          value={props.discount.toNumber()}
-          onChange={e => props.onChange(parseDiscount(e.target.value))}
-          customInput={TextField}
+          value={props.discount}
+          emptyWhenZero
+          placeholder='0.00'
+          onChange={text => props.onChange(parseDiscount(text))}
           fullWidth={false}
           slotProps={{
             input: { startAdornment: <InputAdornment position='start'>$</InputAdornment> },
