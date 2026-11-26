@@ -11,6 +11,8 @@ type DecimalFieldProps = Omit<NumericFormatProps<TextFieldProps>, 'value' | 'def
   onChange: (text: string) => void
   /** Starts empty rather than showing 0. */
   emptyWhenZero?: boolean
+  /** The text to start with, such as '6.50' for an amount being edited, instead of the stored value's shortest form. */
+  initialText?: string
 }
 
 /**
@@ -18,8 +20,8 @@ type DecimalFieldProps = Omit<NumericFormatProps<TextFieldProps>, 'value' | 'def
  * point ('8.' becomes '8', so 8.5 comes out as 85) and turns a cleared field into '0', which on phone keyboards then
  * leaves the caret in front of what is typed next.
  */
-const DecimalField = ({ value, onChange, emptyWhenZero, ...rest }: DecimalFieldProps) => {
-  const [typed, setTyped] = useState(() => (value === undefined || (emptyWhenZero && value.isZero()) ? '' : value.toFixed()))
+const DecimalField = ({ value, onChange, emptyWhenZero, initialText, ...rest }: DecimalFieldProps) => {
+  const [typed, setTyped] = useState(() => initialText ?? (value === undefined || (emptyWhenZero && value.isZero()) ? '' : value.toFixed()))
   return (
     <NumericFormat
       {...rest}

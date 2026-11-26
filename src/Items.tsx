@@ -1,9 +1,10 @@
 import { IconButton, Stack, Tooltip, Typography } from '@mui/material'
 import { AddButton, Empty, Panel, Rows, Section } from '@anmitsu/ui'
-import { BillData, BillMethods } from './hooks/use-bill'
+import { BillData, BillMethods, Item } from './hooks/use-bill'
 import { useState } from 'react'
 import ItemForm from './components/ItemForm'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import UserItemSelector from './UserItemSelector'
 import PersonChip from './components/PersonChip'
 import ReceiptScanner from './components/ReceiptScanner'
@@ -12,6 +13,7 @@ import { formatMoney } from './bill/money'
 
 const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMethods; readOnly?: boolean }) => {
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Item>()
 
   const actions = !readOnly && (
     <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
@@ -35,11 +37,18 @@ const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
                     <ItemSummary item={item} sx={{ flexGrow: 1 }} />
                     <Typography sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{formatMoney(item.pricePerUnit.times(item.quantity))}</Typography>
                     {!readOnly && (
-                      <Tooltip title='Remove item'>
-                        <IconButton size='small' aria-label={`Remove ${item.name}`} onClick={() => methods.removeItem(item.id)} sx={{ mt: -0.25, mr: -0.75 }}>
-                          <DeleteOutlinedIcon fontSize='small' />
-                        </IconButton>
-                      </Tooltip>
+                      <Stack direction='row' sx={{ mt: -0.25, mr: -0.75 }}>
+                        <Tooltip title='Edit item'>
+                          <IconButton size='small' aria-label={`Edit ${item.name}`} onClick={() => setEditing(item)}>
+                            <EditOutlinedIcon fontSize='small' />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title='Remove item'>
+                          <IconButton size='small' aria-label={`Remove ${item.name}`} onClick={() => methods.removeItem(item.id)}>
+                            <DeleteOutlinedIcon fontSize='small' />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     )}
                   </Stack>
                   {(contributors.length > 0 || !readOnly) && (
@@ -57,6 +66,7 @@ const Items = ({ data, methods, readOnly }: { data: BillData; methods: BillMetho
         )}
       </Panel>
       {!readOnly && open && <ItemForm data={data} methods={methods} onClose={() => setOpen(false)} />}
+      {!readOnly && editing && <ItemForm key={editing.id} data={data} methods={methods} item={editing} onClose={() => setEditing(undefined)} />}
     </Section>
   )
 }

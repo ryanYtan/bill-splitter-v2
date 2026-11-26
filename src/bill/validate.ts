@@ -56,6 +56,18 @@ export const validateNewItem = (item: NewItem, items: Item[]): string | undefine
   return undefined
 }
 
+/** Checks the new fields of the item `id`, already in `items`. Keeping its own name is fine; taking another item's is not. */
+export const validateEditedItem = (id: string, item: NewItem, items: Item[]): string | undefined => {
+  const fieldError = validateItemFields(item)
+  if (fieldError) {
+    return fieldError
+  }
+  if (items.some(existing => existing.id !== id && existing.name === item.name)) {
+    return 'Item already exists'
+  }
+  return undefined
+}
+
 /** Coerces a tax percentage into the 0-100 range; an empty or unparseable input counts as 0. */
 export const sanitizePercentage = (percentage: BigNumber): BigNumber => {
   if (!percentage.isFinite()) {

@@ -3,6 +3,7 @@ import { BillData, BillMethods, Item, User } from './hooks/use-bill'
 import { useState } from 'react'
 import AddIcon from '@mui/icons-material/Add'
 import CheckIcon from '@mui/icons-material/Check'
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined'
 import PersonChip from './components/PersonChip'
 import ItemSummary from './components/ItemSummary'
 import SectionDialog from './components/SectionDialog'
@@ -30,7 +31,7 @@ const UserItemSelector = (props: UserItemSelectorProps) => {
 
   return (
     <>
-      <Chip label={props.empty ? 'Who had this?' : 'Edit'} icon={<AddIcon />} variant='outlined' color={props.empty ? 'warning' : 'default'} onClick={() => setOpen(true)} />
+      <Chip label={props.empty ? 'Who had this?' : 'Change people'} icon={props.empty ? <AddIcon /> : <PeopleOutlinedIcon />} variant='outlined' color={props.empty ? 'warning' : 'default'} onClick={() => setOpen(true)} />
       <SectionDialog
         open={open}
         onClose={close}

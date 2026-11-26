@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { describe, expect, it } from 'vitest'
 import { MAX_ENTRY_QUANTITY, MAX_ITEMS, MAX_PRICE, MAX_TEXT_LENGTH, MAX_USER_NAME_LENGTH, MAX_USERS } from './limits'
-import { parseDiscount, parsePercentage, sanitizeDiscount, sanitizePercentage, validateItemFields, validateNewItem, validateUserName } from './validate'
+import { parseDiscount, parsePercentage, sanitizeDiscount, sanitizePercentage, validateEditedItem, validateItemFields, validateNewItem, validateUserName } from './validate'
 
 const newItem = (overrides: { name?: string; price?: number | string; quantity?: number } = {}) => ({
   name: overrides.name ?? 'Chicken Rice',
@@ -62,6 +62,27 @@ describe('validateNewItem', () => {
   it('rejects an item once the bill is full', () => {
     const items = Array.from({ length: MAX_ITEMS }, (_, i) => ({ id: `${i}`, ...newItem({ name: `${i}` }) }))
     expect(validateNewItem(newItem(), items)).toBeDefined()
+  })
+})
+
+describe('validateEditedItem', () => {
+  const items = [
+    { id: '1', ...newItem() },
+    { id: '2', ...newItem({ name: 'Kopi' }) },
+  ]
+
+  it('lets an item keep its own name', () => {
+    expect(validateEditedItem('1', newItem({ price: 5 }), items)).toBeUndefined()
+  })
+
+  it("rejects another item's name and bad fields", () => {
+    expect(validateEditedItem('2', newItem(), items)).toBe('Item already exists')
+    expect(validateEditedItem('1', newItem({ price: 0 }), items)).toBe('Price is required')
+  })
+
+  it('accepts an edit when the bill is full', () => {
+    const full = Array.from({ length: MAX_ITEMS }, (_, i) => ({ id: `${i}`, ...newItem({ name: `${i}` }) }))
+    expect(validateEditedItem('0', newItem({ name: '0', quantity: 2 }), full)).toBeUndefined()
   })
 })
 

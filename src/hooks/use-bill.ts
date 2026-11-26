@@ -13,6 +13,7 @@ export type BillMethods = {
   addUser: (name: string) => void
   removeUser: (id: string) => void
   addItem: (item: NewItem) => string
+  updateItem: (id: string, item: NewItem) => void
   removeItem: (id: string) => void
   setPayer: (id: string | undefined) => void
   addUserItem: (userId: string, itemId: string) => void
@@ -61,6 +62,10 @@ const useBill = (
         const id = uuidv4()
         setItems(prev => [...prev, { id, ...item }])
         return id
+      },
+      // Keeps the id, so who had the item stays as it was
+      updateItem: (id: string, item: NewItem) => {
+        setItems(prev => prev.map(i => (i.id === id ? { id, ...item } : i)))
       },
       removeItem: (id: string) => {
         setItems(prev => prev.filter(i => i.id !== id))
